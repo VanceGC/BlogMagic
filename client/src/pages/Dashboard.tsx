@@ -66,6 +66,7 @@ export default function Dashboard() {
               <Link href="/dashboard" className="text-gray-700 hover:text-purple-600">Dashboard</Link>
               <Link href="/blogs" className="text-gray-700 hover:text-purple-600">Blog Configs</Link>
               <Link href="/posts" className="text-gray-700 hover:text-purple-600">Posts</Link>
+              <Link href="/downloads" className="text-gray-700 hover:text-purple-600">Downloads</Link>
               <Link href="/settings" className="text-gray-700 hover:text-purple-600">Settings</Link>
               <span className="text-gray-600">{user?.name}</span>
             </div>

@@ -27,6 +27,32 @@ export const appRouter = router({
       const subscription = await db.getSubscriptionByUserId(ctx.user.id);
       return subscription || null;
     }),
+
+    createCheckout: protectedProcedure
+      .input(z.object({ trial: z.boolean().default(true) }))
+      .mutation(async ({ ctx, input }) => {
+        const { createCheckoutSession, getStripe, createStripeCustomer } = await import("./stripe");
+        const { ENV } = await import("./_core/env");
+        
+        // Get or create Stripe customer
+        let subscription = await db.getSubscriptionByUserId(ctx.user.id);
+        let customerId = subscription?.stripeCustomerId;
+        
+        if (!customerId) {
+          const customer = await createStripeCustomer(ctx.user.email || "", ctx.user.name || "");
+          customerId = customer.id;
+        }
+        
+        const baseUrl = ENV.isProduction ? "https://blogmagic.app" : "http://localhost:3000";
+        const priceId = process.env.STRIPE_PRICE_ID || "";
+        const session = await createCheckoutSession(
+          customerId,
+          priceId,
+          `${baseUrl}/dashboard?checkout=success`,
+          `${baseUrl}/subscription?checkout=cancel`
+        );
+        return { url: session.url };
+      }),
   }),
 
   apiKeys: router({
