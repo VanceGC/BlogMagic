@@ -17,7 +17,7 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  const { data: posts } = trpc.posts.list.useQuery({ limit: 50 }, {
+  const { data: posts } = trpc.posts.list.useQuery({}, {
     enabled: isAuthenticated,
   });
 
@@ -63,18 +63,10 @@ export default function Dashboard() {
               {APP_TITLE}
             </h1>
             <div className="flex items-center gap-4">
-              <Link href="/dashboard">
-                <a className="text-gray-700 hover:text-purple-600">Dashboard</a>
-              </Link>
-              <Link href="/blogs">
-                <a className="text-gray-700 hover:text-purple-600">Blog Configs</a>
-              </Link>
-              <Link href="/posts">
-                <a className="text-gray-700 hover:text-purple-600">Posts</a>
-              </Link>
-              <Link href="/settings">
-                <a className="text-gray-700 hover:text-purple-600">Settings</a>
-              </Link>
+              <Link href="/dashboard" className="text-gray-700 hover:text-purple-600">Dashboard</Link>
+              <Link href="/blogs" className="text-gray-700 hover:text-purple-600">Blog Configs</Link>
+              <Link href="/posts" className="text-gray-700 hover:text-purple-600">Posts</Link>
+              <Link href="/settings" className="text-gray-700 hover:text-purple-600">Settings</Link>
               <span className="text-gray-600">{user?.name}</span>
             </div>
           </div>
@@ -92,9 +84,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <Button asChild>
-                <Link href="/subscription">
-                  <a>Start Free Trial</a>
-                </Link>
+                <Link href="/subscription">Start Free Trial</Link>
               </Button>
             </CardContent>
           </Card>
@@ -138,19 +128,13 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button asChild className="w-full" variant="default">
-                <Link href="/blogs">
-                  <a>➕ Add Blog Configuration</a>
-                </Link>
+                <Link href="/blogs">➕ Add Blog Configuration</Link>
               </Button>
               <Button asChild className="w-full" variant="outline">
-                <Link href="/settings">
-                  <a>🔑 Configure API Keys</a>
-                </Link>
+                <Link href="/settings">🔑 Configure API Keys</Link>
               </Button>
               <Button asChild className="w-full" variant="outline">
-                <Link href="/posts">
-                  <a>📝 View All Posts</a>
-                </Link>
+                <Link href="/posts">📝 View All Posts</Link>
               </Button>
             </CardContent>
           </Card>

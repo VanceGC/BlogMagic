@@ -136,12 +136,13 @@ export const appRouter = router({
       .input(z.object({ 
         blogConfigId: z.number().optional(),
         limit: z.number().default(50) 
-      }))
+      }).optional())
       .query(async ({ ctx, input }) => {
-        if (input.blogConfigId) {
+        const limit = input?.limit ?? 50;
+        if (input?.blogConfigId) {
           return await db.getPostsByBlogConfigId(input.blogConfigId, ctx.user.id);
         }
-        return await db.getPostsByUserId(ctx.user.id, input.limit);
+        return await db.getPostsByUserId(ctx.user.id, limit);
       }),
 
     generate: protectedProcedure
