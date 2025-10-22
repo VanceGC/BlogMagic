@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
+import AppNav from "@/components/AppNav";
 
 export default function Dashboard() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -56,23 +57,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              {APP_TITLE}
-            </h1>
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard" className="text-gray-700 hover:text-purple-600">Dashboard</Link>
-              <Link href="/blogs" className="text-gray-700 hover:text-purple-600">Blog Configs</Link>
-              <Link href="/posts" className="text-gray-700 hover:text-purple-600">Posts</Link>
-              <Link href="/downloads" className="text-gray-700 hover:text-purple-600">Downloads</Link>
-              <Link href="/settings" className="text-gray-700 hover:text-purple-600">Settings</Link>
-              <span className="text-gray-600">{user?.name}</span>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppNav />
 
       <div className="container mx-auto px-4 py-8">
         {!hasActiveSubscription && (
