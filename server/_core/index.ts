@@ -41,7 +41,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   
   // Stripe webhook
-  const stripeRoutes = require('../routes/stripeRoutes').default;
+  const { default: stripeRoutes } = await import('../routes/stripeRoutes.js');
   app.use('/api/stripe', stripeRoutes);
   // tRPC API
   app.use(
