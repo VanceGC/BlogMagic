@@ -52,7 +52,7 @@ export default function Dashboard() {
   const publishedPosts = posts?.filter(p => p.status === 'published').length || 0;
   const totalBlogs = blogConfigs?.length || 0;
 
-  const hasActiveSubscription = subscription && ['active', 'trialing'].includes(subscription.status);
+  const hasActiveSubscription = subscription && subscription.status && ['active', 'trialing'].includes(subscription.status);
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -24,7 +24,8 @@ export const appRouter = router({
 
   subscription: router({
     get: protectedProcedure.query(async ({ ctx }) => {
-      return await db.getSubscriptionByUserId(ctx.user.id);
+      const subscription = await db.getSubscriptionByUserId(ctx.user.id);
+      return subscription || null;
     }),
   }),
 
