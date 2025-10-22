@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,127 @@ export async function getUser(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Subscriptions
+export async function getSubscriptionByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+  return result[0];
+}
+
+export async function upsertSubscription(data: InsertSubscription) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(subscriptions).values(data).onDuplicateKeyUpdate({ set: data });
+}
+
+export async function updateSubscription(id: number, data: Partial<InsertSubscription>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(subscriptions).set(data).where(eq(subscriptions.id, id));
+}
+
+// API Keys
+export async function getApiKeysByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(apiKeys).where(eq(apiKeys.userId, userId));
+}
+
+export async function createApiKey(data: InsertApiKey) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(apiKeys).values(data);
+  return result;
+}
+
+export async function deleteApiKey(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(apiKeys).where(eq(apiKeys.id, id));
+}
+
+// Blog Configs
+export async function getBlogConfigsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(blogConfigs).where(eq(blogConfigs.userId, userId));
+}
+
+export async function getBlogConfigById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(blogConfigs).where(eq(blogConfigs.id, id)).limit(1);
+  return result[0];
+}
+
+export async function createBlogConfig(data: InsertBlogConfig) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(blogConfigs).values(data);
+  return result;
+}
+
+export async function updateBlogConfig(id: number, userId: number, data: Partial<InsertBlogConfig>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(blogConfigs).set(data).where(eq(blogConfigs.id, id));
+}
+
+export async function deleteBlogConfig(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(blogConfigs).where(eq(blogConfigs.id, id));
+}
+
+// Posts
+export async function getPostsByBlogConfigId(blogConfigId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(posts).where(eq(posts.blogConfigId, blogConfigId));
+}
+
+export async function getPostsByUserId(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(posts).where(eq(posts.userId, userId)).limit(limit);
+}
+
+export async function createPost(data: InsertPost) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(posts).values(data);
+  return result;
+}
+
+export async function updatePost(id: number, data: Partial<InsertPost>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(posts).set(data).where(eq(posts.id, id));
+}
+
+export async function deletePost(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(posts).where(eq(posts.id, id));
+}
+
+// Post Queue
+export async function createPostQueueItem(data: InsertPostQueueItem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(postQueue).values(data);
+  return result;
+}
+
+export async function getPendingQueueItems() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(postQueue).where(eq(postQueue.status, "pending"));
+}
+
+export async function updateQueueItem(id: number, data: Partial<InsertPostQueueItem>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(postQueue).set(data).where(eq(postQueue.id, id));
+}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog Automation</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Blog Automation</h1>
+            <p class="subtitle">Quick access to your blog automation platform</p>
+        </div>
+
+        <div id="not-configured" class="section" style="display: none;">
+            <div class="alert alert-warning">
+                <p>Please configure your platform URL first.</p>
+                <button id="open-options" class="btn btn-primary">Open Settings</button>
+            </div>
+        </div>
+
+        <div id="main-content" class="section">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-posts">-</div>
+                    <div class="stat-label">Total Posts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="draft-posts">-</div>
+                    <div class="stat-label">Drafts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="published-posts">-</div>
+                    <div class="stat-label">Published</div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="generate-post" class="btn btn-primary btn-block">
+                    <span class="icon">✨</span>
+                    Generate New Post
+                </button>
+                
+                <button id="view-posts" class="btn btn-secondary btn-block">
+                    <span class="icon">📝</span>
+                    View All Posts
+                </button>
+                
+                <button id="manage-blogs" class="btn btn-secondary btn-block">
+                    <span class="icon">⚙️</span>
+                    Manage Blog Configs
+                </button>
+            </div>
+
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="quick-action-grid">
+                    <button id="open-dashboard" class="quick-btn">
+                        <span class="icon">🏠</span>
+                        Dashboard
+                    </button>
+                    <button id="open-analytics" class="quick-btn">
+                        <span class="icon">📊</span>
+                        Analytics
+                    </button>
+                    <button id="open-settings" class="quick-btn">
+                        <span class="icon">⚙️</span>
+                        Settings
+                    </button>
+                    <button id="open-help" class="quick-btn">
+                        <span class="icon">❓</span>
+                        Help
+                    </button>
+                </div>
+            </div>
+
+            <div class="current-page-section">
+                <h3>Current Page</h3>
+                <p class="page-url" id="current-url">-</p>
+                <button id="generate-from-page" class="btn btn-outline btn-block">
+                    Generate Post from This Page
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <a href="#" id="footer-settings">Settings</a>
+            <span class="separator">•</span>
+            <a href="#" id="footer-logout">Logout</a>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
+

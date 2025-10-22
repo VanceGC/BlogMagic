@@ -1,0 +1,8 @@
+Icon files needed:
+- icon16.png (16x16)
+- icon32.png (32x32)
+- icon48.png (48x48)
+- icon128.png (128x128)
+
+These should be created with your brand colors and logo.
+For now, you can use any PNG images with these dimensions.

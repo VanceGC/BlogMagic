@@ -30,11 +30,19 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  
+  // Stripe webhook needs raw body, so register before JSON parser
+  app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+  
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  
+  // Stripe webhook
+  const stripeRoutes = require('../routes/stripeRoutes').default;
+  app.use('/api/stripe', stripeRoutes);
   // tRPC API
   app.use(
     "/api/trpc",
