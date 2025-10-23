@@ -218,6 +218,54 @@ export const appRouter = router({
         return { success: true, content };
       }),
 
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const posts = await db.getPostsByUserId(ctx.user.id, 1000);
+        const post = posts.find(p => p.id === input.id);
+        if (!post) {
+          throw new Error("Post not found");
+        }
+        return post;
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        content: z.string().optional(),
+        excerpt: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updatePost(input.id, {
+          title: input.title,
+          content: input.content,
+          excerpt: input.excerpt,
+        });
+        return { success: true };
+      }),
+
+    generateImage: protectedProcedure
+      .input(z.object({ postId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const posts = await db.getPostsByUserId(ctx.user.id, 1000);
+        const post = posts.find(p => p.id === input.postId);
+        if (!post) {
+          throw new Error("Post not found");
+        }
+
+        // Generate image from post title
+        const imageUrl = await generateFeaturedImage(
+          `Professional blog post featured image for: ${post.title}`
+        );
+
+        await db.updatePost(input.postId, {
+          featuredImageUrl: imageUrl,
+        });
+
+        return { success: true, imageUrl };
+      }),
+
     publish: protectedProcedure
       .input(z.object({
         postId: z.number(),

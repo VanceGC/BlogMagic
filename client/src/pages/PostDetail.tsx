@@ -1,0 +1,291 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { trpc } from "@/lib/trpc";
+import { useEffect, useState } from "react";
+import { useLocation, useRoute } from "wouter";
+import AppNav from "@/components/AppNav";
+import { toast } from "sonner";
+
+export default function PostDetail() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [, setLocation] = useLocation();
+  const [, params] = useRoute("/posts/:id");
+  const postId = params?.id ? parseInt(params.id) : null;
+
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+
+  const { data: post, isLoading, refetch } = trpc.posts.getById.useQuery(
+    { id: postId! },
+    { enabled: !!postId && isAuthenticated }
+  );
+
+  const updatePost = trpc.posts.update.useMutation({
+    onSuccess: () => {
+      toast.success("Post updated successfully");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update post");
+    },
+  });
+
+  const generateImage = trpc.posts.generateImage.useMutation({
+    onSuccess: () => {
+      toast.success("Featured image generated!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to generate image");
+    },
+  });
+
+  const publishPost = trpc.posts.publish.useMutation({
+    onSuccess: () => {
+      toast.success("Post published to WordPress!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to publish post");
+    },
+  });
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      setLocation("/");
+    }
+  }, [authLoading, isAuthenticated, setLocation]);
+
+  useEffect(() => {
+    if (post) {
+      setTitle(post.title || "");
+      setContent(post.content || "");
+      setExcerpt(post.excerpt || "");
+    }
+  }, [post]);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <AppNav />
+        <div className="container mx-auto px-4 py-8">
+          <Card>
+            <CardContent className="text-center py-16">
+              <h3 className="text-xl font-semibold mb-2">Post not found</h3>
+              <Button onClick={() => setLocation("/posts")}>Back to Posts</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSave = () => {
+    if (!postId) return;
+    updatePost.mutate({
+      id: postId,
+      title,
+      content,
+      excerpt,
+    });
+  };
+
+  const handleGenerateImage = () => {
+    if (!postId) return;
+    generateImage.mutate({ postId });
+  };
+
+  const handlePublish = () => {
+    if (!postId) return;
+    publishPost.mutate({ postId });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <AppNav />
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <Button variant="ghost" onClick={() => setLocation("/posts")}>
+                ← Back to Posts
+              </Button>
+              <h1 className="text-3xl font-bold mt-2">Edit Post</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`text-sm px-3 py-1 rounded-full ${
+                  post.status === "published"
+                    ? "bg-green-100 text-green-700"
+                    : post.status === "draft"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-gray-100 text-gray-700"
+                }`}
+              >
+                {post.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-6">
+            {/* Featured Image */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Featured Image</CardTitle>
+                <CardDescription>
+                  AI-generated image for your blog post
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {post.featuredImageUrl ? (
+                  <div className="space-y-4">
+                    <img
+                      src={post.featuredImageUrl}
+                      alt={post.title || "Featured image"}
+                      className="w-full rounded-lg border"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={handleGenerateImage}
+                      disabled={generateImage.isPending}
+                      className="w-full"
+                    >
+                      {generateImage.isPending ? "Generating..." : "Regenerate Image"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <svg
+                      className="w-12 h-12 mx-auto mb-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <p className="text-gray-600 mb-4">No featured image yet</p>
+                    <Button
+                      onClick={handleGenerateImage}
+                      disabled={generateImage.isPending}
+                    >
+                      {generateImage.isPending ? "Generating..." : "Generate Featured Image"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Post Content */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Post Content</CardTitle>
+                <CardDescription>Edit your blog post details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Enter post title..."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="excerpt">Excerpt</Label>
+                  <Textarea
+                    id="excerpt"
+                    value={excerpt}
+                    onChange={(e) => setExcerpt(e.target.value)}
+                    placeholder="Brief summary of the post..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="content">Content</Label>
+                  <Textarea
+                    id="content"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Write your post content..."
+                    rows={20}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleSave}
+                    disabled={updatePost.isPending}
+                    className="flex-1"
+                  >
+                    {updatePost.isPending ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button
+                    onClick={handlePublish}
+                    disabled={publishPost.isPending || post.status === "published"}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600"
+                  >
+                    {publishPost.isPending
+                      ? "Publishing..."
+                      : post.status === "published"
+                      ? "Already Published"
+                      : "Publish to WordPress"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Post Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Post Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Created:</span>
+                  <span>{new Date(post.createdAt).toLocaleString()}</span>
+                </div>
+                {post.publishedAt && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Published:</span>
+                    <span>{new Date(post.publishedAt).toLocaleString()}</span>
+                  </div>
+                )}
+                {post.wordpressPostId && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">WordPress Post ID:</span>
+                    <span>{post.wordpressPostId}</span>
+                  </div>
+                )}
+
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

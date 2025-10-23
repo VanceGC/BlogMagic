@@ -11,6 +11,7 @@ import Posts from "./pages/Posts";
 import Settings from "./pages/Settings";
 import Subscription from "./pages/Subscription";
 import Downloads from "./pages/Downloads";
+import PostDetail from "./pages/PostDetail";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/blogs"} component={BlogConfigs} />
       <Route path={"/posts"} component={Posts} />
+      <Route path={"/posts/:id"} component={PostDetail} />
       <Route path={"/settings"} component={Settings} />      <Route path={" /subscription"} component={Subscription} />
       <Route path={"/downloads"} component={Downloads} />
       <Route path={"/404"} component={NotFound} />

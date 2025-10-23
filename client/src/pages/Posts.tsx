@@ -59,7 +59,11 @@ export default function Posts() {
           ) : (
             <div className="space-y-4">
               {posts.map((post) => (
-                <Card key={post.id} className="hover:shadow-lg transition-shadow">
+                <Card 
+                  key={post.id} 
+                  className="hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => setLocation(`/posts/${post.id}`)}
+                >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
