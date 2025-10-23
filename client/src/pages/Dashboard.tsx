@@ -5,6 +5,7 @@ import { APP_TITLE, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Link, useLocation } from "wouter";
 import AppNav from "@/components/AppNav";
+import { toast } from "sonner";
 
 export default function Dashboard() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -14,11 +15,21 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  const { data: blogConfigs } = trpc.blogConfigs.list.useQuery(undefined, {
+  const { data: blogConfigs, refetch: refetchBlogs } = trpc.blogConfigs.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
 
-  const { data: posts } = trpc.posts.list.useQuery({}, {
+  const generatePost = trpc.posts.generate.useMutation({
+    onSuccess: () => {
+      toast.success("Post generated successfully! Check the Posts page.");
+      refetchPosts();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to generate post");
+    },
+  });
+
+  const { data: posts, refetch: refetchPosts } = trpc.posts.list.useQuery({}, {
     enabled: isAuthenticated,
   });
 
@@ -118,6 +129,24 @@ export default function Dashboard() {
               </Button>
               <Button asChild className="w-full" variant="outline">
                 <Link href="/settings">🔑 Configure API Keys</Link>
+              </Button>
+              <Button
+                className="w-full"
+                variant="outline"
+                onClick={() => {
+                  if (totalBlogs === 0) {
+                    toast.error("Please create a blog configuration first");
+                    setLocation("/blogs");
+                  } else {
+                    const firstBlog = blogConfigs?.[0];
+                    if (firstBlog) {
+                      generatePost.mutate({ blogConfigId: firstBlog.id });
+                    }
+                  }
+                }}
+                disabled={generatePost.isPending}
+              >
+                ✨ {generatePost.isPending ? "Generating..." : "Generate New Post"}
               </Button>
               <Button asChild className="w-full" variant="outline">
                 <Link href="/posts">📝 View All Posts</Link>
