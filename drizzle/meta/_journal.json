@@ -15,6 +15,34 @@
       "when": 1761173336394,
       "tag": "0001_uneven_blob",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1761229114365,
+      "tag": "0002_spicy_wendell_rand",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1761238363489,
+      "tag": "0003_premium_gunslinger",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1761238751975,
+      "tag": "0004_flawless_blue_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1761241008102,
+      "tag": "0005_medical_gamma_corps",
+      "breakpoints": true
     }
   ]
 }

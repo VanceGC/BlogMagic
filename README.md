@@ -12,7 +12,7 @@ Blog Magic is an enterprise-grade AI-powered blog automation platform that gener
 - **WordPress Integration**: Seamless publishing via REST API
 - **Stripe Payments**: $9/month subscription with 30-day free trial
 - **Multi-Blog Support**: Manage multiple WordPress sites from one dashboard
-- **User Authentication**: Secure OAuth-based login via Manus
+- **User Authentication**: Secure Google OAuth 2.0 login
 - **API Key Management**: Users bring their own OpenAI/Anthropic/Stability AI keys
 
 ### WordPress Plugin
@@ -35,7 +35,7 @@ Blog Magic is an enterprise-grade AI-powered blog automation platform that gener
 - **Database**: MySQL/TiDB via Drizzle ORM
 - **Payments**: Stripe
 - **AI**: OpenAI GPT-4, DALL-E (user's API keys)
-- **Authentication**: Manus OAuth
+- **Authentication**: Google OAuth 2.0
 
 ## Project Structure
 
@@ -63,21 +63,36 @@ ai-blog-automation/
 
 ### 1. Environment Configuration
 
-Set these via the Manus project settings UI:
+Copy `.env.example` to `.env` and configure:
 
-**Branding** (via Settings GUI):
-- `VITE_APP_TITLE`: "Blog Magic"
-- `VITE_APP_LOGO`: Your logo URL
+**Database**:
+- `DATABASE_URL`: MySQL connection string
 
-**Stripe** (already configured):
+**Authentication**:
+- `JWT_SECRET`: Random secret for JWT tokens
+- `GOOGLE_CLIENT_ID`: From Google Cloud Console
+- `GOOGLE_CLIENT_SECRET`: From Google Cloud Console
+- `GOOGLE_CALLBACK_URL`: OAuth callback URL
+
+**OpenAI**:
+- `OPENAI_API_KEY`: Your OpenAI API key
+
+**Stripe**:
 - `STRIPE_SECRET_KEY`: Your Stripe secret key
 - `STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key
 - `STRIPE_WEBHOOK_SECRET`: Webhook signing secret
 - `STRIPE_PRICE_ID`: Price ID for $9/month subscription
 
+**App Config**:
+- `VITE_APP_TITLE`: "BlogMagic"
+- `VITE_APP_LOGO`: Your logo URL
+- `PORT`: Server port (default: 3000)
+
 **Stripe Webhook**:
-- Configure webhook endpoint in Stripe Dashboard: `https://blogmagic.app/api/stripe/webhook`
+- Configure webhook endpoint in Stripe Dashboard: `https://yourdomain.com/api/stripe/webhook`
 - Select events: `customer.subscription.*`, `invoice.payment_*`
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed setup instructions.
 
 ### 2. Database
 
@@ -182,21 +197,36 @@ Schema is already created and migrated. Tables:
 
 ## Security
 
-- OAuth authentication via Manus
+- Google OAuth 2.0 authentication
 - API keys encrypted with AES (using JWT_SECRET)
 - Stripe webhook signature verification
 - WordPress Application Passwords
 - All inputs sanitized and validated
+- Secure session management with JWT
 
 ## Deployment
 
-The platform is designed for deployment at `blogmagic.app`:
+Multiple deployment options available:
 
-1. Deploy via Manus deployment system
-2. Configure domain: blogmagic.app
-3. Set environment variables via Settings GUI
-4. Configure Stripe webhook URL
-5. Test end-to-end flow
+**Docker** (recommended):
+```bash
+docker-compose up -d
+```
+
+**VPS/Cloud Server**:
+```bash
+pnpm install
+pnpm db:push
+pnpm build
+pnpm start
+```
+
+**Platform as a Service** (Vercel, Railway, Render):
+1. Connect GitHub repository
+2. Add environment variables
+3. Deploy
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide with turnkey setup in 10-15 minutes.
 
 ## Development
 

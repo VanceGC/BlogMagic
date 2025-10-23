@@ -9,6 +9,14 @@ import { useEffect, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import AppNav from "@/components/AppNav";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function PostDetail() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -19,6 +27,10 @@ export default function PostDetail() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [excerpt, setExcerpt] = useState("");
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regenerateTopic, setRegenerateTopic] = useState("");
+  const [scheduledFor, setScheduledFor] = useState<string>("");
+  const [showScheduling, setShowScheduling] = useState(false);
 
   const { data: post, isLoading, refetch } = trpc.posts.getById.useQuery(
     { id: postId! },
@@ -55,6 +67,31 @@ export default function PostDetail() {
     },
   });
 
+  const regenerateContent = trpc.posts.regenerateContent.useMutation({
+    onSuccess: (data) => {
+      toast.success("Content regenerated successfully!");
+      setTitle(data.title);
+      setContent(data.content);
+      setExcerpt(data.excerpt);
+      setShowRegenerateModal(false);
+      setRegenerateTopic("");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to regenerate content");
+    },
+  });
+
+  const updateSchedule = trpc.posts.updateSchedule.useMutation({
+    onSuccess: () => {
+      toast.success("Schedule updated successfully!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update schedule");
+    },
+  });
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       setLocation("/");
@@ -66,6 +103,16 @@ export default function PostDetail() {
       setTitle(post.title || "");
       setContent(post.content || "");
       setExcerpt(post.excerpt || "");
+      if (post.scheduledFor) {
+        // Convert to local datetime-local format
+        const date = new Date(post.scheduledFor);
+        const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16);
+        setScheduledFor(localDateTime);
+      } else {
+        setScheduledFor("");
+      }
     }
   }, [post]);
 
@@ -111,6 +158,38 @@ export default function PostDetail() {
   const handlePublish = () => {
     if (!postId) return;
     publishPost.mutate({ postId });
+  };
+
+  const handleRegenerateContent = () => {
+    if (!postId) return;
+    regenerateContent.mutate({
+      postId,
+      topic: regenerateTopic || undefined,
+    });
+  };
+
+  const handleSchedulePost = () => {
+    if (!postId || !scheduledFor) return;
+    
+    // Convert local datetime to UTC
+    const localDate = new Date(scheduledFor);
+    const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+    
+    updateSchedule.mutate({
+      postId,
+      scheduledFor: utcDate.toISOString(),
+      status: "scheduled",
+    });
+  };
+
+  const handleRemoveSchedule = () => {
+    if (!postId) return;
+    updateSchedule.mutate({
+      postId,
+      scheduledFor: null,
+      status: "draft",
+    });
+    setScheduledFor("");
   };
 
   return (
@@ -197,8 +276,19 @@ export default function PostDetail() {
             {/* Post Content */}
             <Card>
               <CardHeader>
-                <CardTitle>Post Content</CardTitle>
-                <CardDescription>Edit your blog post details</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Post Content</CardTitle>
+                    <CardDescription>Edit your blog post details</CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowRegenerateModal(true)}
+                    disabled={regenerateContent.isPending}
+                  >
+                    🔄 Regenerate Content
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -257,6 +347,73 @@ export default function PostDetail() {
               </CardContent>
             </Card>
 
+            {/* Scheduling */}
+            {post.status !== "published" && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>📅 Schedule Post</CardTitle>
+                  <CardDescription>
+                    {post.status === "scheduled"
+                      ? "This post is scheduled for automatic publishing"
+                      : "Schedule this post for future publishing"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduledFor">Scheduled Date & Time</Label>
+                    <Input
+                      id="scheduledFor"
+                      type="datetime-local"
+                      value={scheduledFor}
+                      onChange={(e) => setScheduledFor(e.target.value)}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-gray-500">
+                      Select when this post should be published (in your local timezone)
+                    </p>
+                  </div>
+
+                  {post.status === "scheduled" && post.scheduledFor && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <p className="text-sm font-medium text-purple-900 mb-1">
+                        Currently scheduled for:
+                      </p>
+                      <p className="text-sm text-purple-700">
+                        {new Date(post.scheduledFor).toLocaleString(undefined, {
+                          dateStyle: "full",
+                          timeStyle: "short",
+                        })}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={handleSchedulePost}
+                      disabled={!scheduledFor || updateSchedule.isPending}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700"
+                    >
+                      {updateSchedule.isPending
+                        ? "Updating..."
+                        : post.status === "scheduled"
+                        ? "Update Schedule"
+                        : "Schedule Post"}
+                    </Button>
+                    {post.status === "scheduled" && (
+                      <Button
+                        onClick={handleRemoveSchedule}
+                        disabled={updateSchedule.isPending}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Remove Schedule
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Post Info */}
             <Card>
               <CardHeader>
@@ -285,6 +442,52 @@ export default function PostDetail() {
           </div>
         </div>
       </div>
+
+      {/* Regenerate Content Modal */}
+      <Dialog open={showRegenerateModal} onOpenChange={setShowRegenerateModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Regenerate Post Content</DialogTitle>
+            <DialogDescription>
+              Generate new title, excerpt, and content while keeping the featured image.
+              Optionally specify a topic, or leave blank to generate based on your blog configuration.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="regenerate-topic">Topic (Optional)</Label>
+              <Input
+                id="regenerate-topic"
+                value={regenerateTopic}
+                onChange={(e) => setRegenerateTopic(e.target.value)}
+                placeholder="e.g., 'How to improve productivity with AI tools'"
+              />
+              <p className="text-sm text-gray-500">
+                Leave blank to auto-generate a topic tailored to your audience
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRegenerateModal(false);
+                setRegenerateTopic("");
+              }}
+              disabled={regenerateContent.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRegenerateContent}
+              disabled={regenerateContent.isPending}
+              className="bg-gradient-to-r from-purple-600 to-blue-600"
+            >
+              {regenerateContent.isPending ? "Regenerating..." : "✨ Regenerate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

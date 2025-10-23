@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import { trpc } from "@/lib/trpc";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import AppNav from "@/components/AppNav";
+import BlogConfigsTab from "@/components/BlogConfigsTab";
 import { toast } from "sonner";
 
 export default function Settings() {
@@ -80,193 +82,187 @@ export default function Settings() {
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Settings</h1>
-            <p className="text-gray-600">Manage your API keys and preferences</p>
+            <p className="text-gray-600">Manage your API keys, preferences, and downloads</p>
           </div>
 
-          <div className="space-y-6">
-            {/* Add API Key */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Add API Key</CardTitle>
-                <CardDescription>
-                  Add your AI provider API keys to enable content generation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="provider">Provider</Label>
-                    <Select value={provider} onValueChange={(v: any) => setProvider(v)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="openai">OpenAI (GPT-4, DALL-E)</SelectItem>
-                        <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
-                        <SelectItem value="stability">Stability AI (Image Generation)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+          <Tabs defaultValue="api-keys" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+              <TabsTrigger value="blog-configs">Blog Configs</TabsTrigger>
+              <TabsTrigger value="downloads">Downloads</TabsTrigger>
+            </TabsList>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="keyName">Key Name</Label>
-                    <Input
-                      id="keyName"
-                      placeholder="e.g., My OpenAI Key"
-                      value={keyName}
-                      onChange={(e) => setKeyName(e.target.value)}
-                    />
-                  </div>
+            <TabsContent value="api-keys" className="space-y-6">
+              {/* Add API Key */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Add API Key</CardTitle>
+                  <CardDescription>
+                    Add your AI provider API keys to enable content generation
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="provider">Provider</Label>
+                      <Select value={provider} onValueChange={(v: any) => setProvider(v)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="openai">OpenAI (GPT-4, DALL-E)</SelectItem>
+                          <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
+                          <SelectItem value="stability">Stability AI (Image Generation)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="apiKey">API Key</Label>
-                    <Input
-                      id="apiKey"
-                      type="password"
-                      placeholder="sk-..."
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={createKey.isPending}
-                  >
-                    {createKey.isPending ? "Adding..." : "Add API Key"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            {/* Existing API Keys */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Your API Keys</CardTitle>
-                <CardDescription>
-                  Manage your stored API keys (keys are encrypted)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!apiKeys || apiKeys.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <svg
-                      className="w-12 h-12 mx-auto mb-4 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                    <div className="space-y-2">
+                      <Label htmlFor="keyName">Key Name</Label>
+                      <Input
+                        id="keyName"
+                        placeholder="e.g., My OpenAI Key"
+                        value={keyName}
+                        onChange={(e) => setKeyName(e.target.value)}
                       />
-                    </svg>
-                    <p>No API keys added yet</p>
-                    <p className="text-sm mt-2">Add your first API key above to get started</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {apiKeys.map((key) => (
-                      <div
-                        key={key.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-5 h-5 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                              />
-                            </svg>
-                          </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKey">API Key</Label>
+                      <Input
+                        id="apiKey"
+                        type="password"
+                        placeholder="sk-..."
+                        value={apiKey}
+                        onChange={(e) => setApiKey(e.target.value)}
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={createKey.isPending}
+                    >
+                      {createKey.isPending ? "Adding..." : "Add API Key"}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Existing API Keys */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your API Keys</CardTitle>
+                  <CardDescription>
+                    Manage your stored API keys (keys are encrypted)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {apiKeys && apiKeys.length > 0 ? (
+                    <div className="space-y-3">
+                      {apiKeys.map((key) => (
+                        <div
+                          key={key.id}
+                          className="flex items-center justify-between p-4 border rounded-lg"
+                        >
                           <div>
-                            <p className="font-semibold">{key.keyName}</p>
+                            <p className="font-medium">{key.keyName}</p>
                             <p className="text-sm text-gray-500 capitalize">{key.provider}</p>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full ${
-                              key.isActive
-                                ? "bg-green-100 text-green-700"
-                                : "bg-gray-100 text-gray-700"
-                            }`}
-                          >
-                            {key.isActive ? "Active" : "Inactive"}
-                          </span>
                           <Button
-                            variant="ghost"
+                            variant="destructive"
                             size="sm"
                             onClick={() => deleteKey.mutate({ id: key.id })}
                             disabled={deleteKey.isPending}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             Delete
                           </Button>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">
+                      No API keys added yet. Add one above to get started.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            {/* Help Section */}
-            <Card className="bg-blue-50 border-blue-200">
-              <CardHeader>
-                <CardTitle className="text-blue-900">Need Help Getting API Keys?</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div>
-                  <p className="font-semibold text-blue-900">OpenAI:</p>
-                  <a
-                    href="https://platform.openai.com/api-keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Get your API key from OpenAI Platform →
-                  </a>
-                </div>
-                <div>
-                  <p className="font-semibold text-blue-900">Anthropic:</p>
-                  <a
-                    href="https://console.anthropic.com/settings/keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Get your API key from Anthropic Console →
-                  </a>
-                </div>
-                <div>
-                  <p className="font-semibold text-blue-900">Stability AI:</p>
-                  <a
-                    href="https://platform.stability.ai/account/keys"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Get your API key from Stability AI Platform →
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+            <TabsContent value="blog-configs" className="space-y-6">
+              <BlogConfigsTab />
+            </TabsContent>
+
+            <TabsContent value="downloads" className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* WordPress Plugin */}
+                <Card className="border-2 border-purple-200">
+                  <CardHeader className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12.158 12.786l-2.698 7.84c.806.236 1.657.365 2.54.365 1.047 0 2.051-.18 2.986-.51-.024-.037-.046-.078-.065-.123l-2.763-7.572zm-5.316 3.713c-1.098-1.008-1.842-2.403-1.842-3.999 0-1.154.37-2.23 1.004-3.104l2.838 7.783zm10.157-8.499c.002-.027.002-.056.002-.085 0-.27-.098-.514-.258-.705-.16-.19-.385-.285-.675-.285h-.03c-.027.002-.056.002-.085.002-.27 0-.514.098-.705.258-.19.16-.285.385-.285.675 0 .027.002.056.002.085.002.027.002.056.002.085 0 .27.098.514.258.705.16.19.385.285.675.285.027 0 .056-.002.085-.002.027-.002.056-.002.085-.002.27 0 .514-.098.705-.258.19-.16.285-.385.285-.675 0-.027-.002-.056-.002-.085-.002-.027-.002-.056-.002-.085zm1.316 8.499c.806-.236 1.657-.365 2.54-.365 1.047 0 2.051.18 2.986.51-.024.037-.046.078-.065.123l-2.763 7.572-2.698-7.84zm-5.316-3.713c1.098 1.008 1.842 2.403 1.842 3.999 0 1.154-.37 2.23-1.004 3.104l-2.838-7.783z"/>
+                      </svg>
+                    </div>
+                    <CardTitle>WordPress Plugin</CardTitle>
+                    <CardDescription className="text-sm">
+                      Auto-publish posts to WordPress
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm space-y-2">
+                      <p className="font-semibold">Features:</p>
+                      <ul className="space-y-1 text-gray-600">
+                        <li>✓ Automatic post publishing</li>
+                        <li>✓ SEO meta data integration</li>
+                        <li>✓ Featured image upload</li>
+                        <li>✓ Category & tag management</li>
+                      </ul>
+                    </div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+                      onClick={() => window.location.href = "/blogmagic-wp.zip"}
+                    >
+                      Download Plugin
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Chrome Extension */}
+                <Card className="border-2 border-blue-200">
+                  <CardHeader className="text-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 1.5c5.799 0 10.5 4.701 10.5 10.5S17.799 22.5 12 22.5 1.5 17.799 1.5 12 6.201 1.5 12 1.5zm0 2.25c-4.556 0-8.25 3.694-8.25 8.25s3.694 8.25 8.25 8.25 8.25-3.694 8.25-8.25-3.694-8.25-8.25-8.25z"/>
+                      </svg>
+                    </div>
+                    <CardTitle>Chrome Extension</CardTitle>
+                    <CardDescription className="text-sm">
+                      Quick access from your browser
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm space-y-2">
+                      <p className="font-semibold">Features:</p>
+                      <ul className="space-y-1 text-gray-600">
+                        <li>✓ One-click post generation</li>
+                        <li>✓ Quick stats overview</li>
+                        <li>✓ Keyword research helper</li>
+                        <li>✓ Notification alerts</li>
+                      </ul>
+                    </div>
+                    <Button 
+                      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600"
+                      onClick={() => window.location.href = "/chrome-extension.zip"}
+                    >
+                      Download Extension
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
   );
 }
-

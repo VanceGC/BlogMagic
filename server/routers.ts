@@ -2,7 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router, adminProcedure } from "./_core/trpc";
 import * as db from "./db";
 import { encryptApiKey, decryptApiKey } from "./encryption";
 import { generateBlogPost, generateFeaturedImage, generateTopicIdeas } from "./contentGenerator";
@@ -94,6 +94,84 @@ export const appRouter = router({
       }),
   }),
 
+  trending: router({
+    getSuggestions: protectedProcedure
+      .input(z.object({ blogConfigId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Check if user is admin (unlimited credits)
+        if (ctx.user.role !== 'admin') {
+          // Check subscription and credits
+          const subscription = await db.getSubscriptionByUserId(ctx.user.id);
+          if (!subscription) {
+            throw new Error("No active subscription found. Please subscribe to use this feature.");
+          }
+          
+          if (subscription.credits < 10) {
+            throw new Error(`Insufficient credits. You have ${subscription.credits} credits remaining. Trending topic generation costs 10 credits.`);
+          }
+          
+          // Deduct credits
+          await db.deductCredits(ctx.user.id, 10);
+        }
+        
+        const { getTrendingSuggestions } = await import("./trendingTopics");
+        const blogConfig = await db.getBlogConfigById(input.blogConfigId, ctx.user.id);
+        if (!blogConfig) {
+          throw new Error("Blog configuration not found");
+        }
+        return await getTrendingSuggestions(blogConfig);
+      }),
+
+    saveTopic: protectedProcedure
+      .input(z.object({
+        blogConfigId: z.number(),
+        title: z.string(),
+        reason: z.string(),
+        source: z.string(),
+        keywords: z.array(z.string()),
+        searchVolume: z.enum(["high", "medium", "low"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await db.createSavedTopic({
+          userId: ctx.user.id,
+          blogConfigId: input.blogConfigId,
+          title: input.title,
+          reason: input.reason,
+          source: input.source,
+          keywords: JSON.stringify(input.keywords),
+          searchVolume: input.searchVolume,
+        });
+        return { success: true };
+      }),
+
+    listSaved: protectedProcedure
+      .query(async ({ ctx }) => {
+        const topics = await db.getSavedTopicsByUserId(ctx.user.id);
+        return topics.map(topic => ({
+          ...topic,
+          keywords: JSON.parse(topic.keywords) as string[],
+        }));
+      }),
+
+    getSaved: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const topic = await db.getSavedTopicById(input.id, ctx.user.id);
+        if (!topic) return null;
+        return {
+          ...topic,
+          keywords: JSON.parse(topic.keywords) as string[],
+        };
+      }),
+
+    deleteSaved: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteSavedTopic(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
   blogConfigs: router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return await db.getBlogConfigsByUserId(ctx.user.id);
@@ -118,13 +196,36 @@ export const appRouter = router({
         targetAudience: z.string().optional(),
         toneOfVoice: z.string().default("professional"),
         postingFrequency: z.enum(["daily", "weekly", "biweekly", "monthly"]).default("weekly"),
+        schedulingEnabled: z.number().default(0),
+        autoPublish: z.number().default(0),
+        scheduleTime: z.string().optional(),
+        scheduleDayOfWeek: z.number().optional(),
+        timezone: z.string().default("America/New_York"),
+        color: z.string().default("#8B5CF6"),
       }))
       .mutation(async ({ ctx, input }) => {
-        await db.createBlogConfig({
+        const result = await db.createBlogConfig({
           userId: ctx.user.id,
           ...input,
           isActive: 1,
         });
+
+        // If scheduling is enabled, generate the first 3 posts
+        if (input.schedulingEnabled === 1 && input.scheduleTime) {
+          const { generateScheduledPosts } = await import("./scheduler");
+          // Get the newly created config ID from the result
+          // Drizzle returns an array with insertId in the first element
+          const configId = (result as any)[0]?.insertId || (result as any).insertId;
+          if (configId) {
+            try {
+              await generateScheduledPosts(Number(configId), ctx.user.id, 3);
+            } catch (error) {
+              console.error("Failed to generate scheduled posts:", error);
+              // Don't fail the entire creation if post generation fails
+            }
+          }
+        }
+
         return { success: true };
       }),
 
@@ -142,11 +243,61 @@ export const appRouter = router({
         targetAudience: z.string().optional(),
         toneOfVoice: z.string().optional(),
         postingFrequency: z.enum(["daily", "weekly", "biweekly", "monthly"]).optional(),
+        schedulingEnabled: z.number().optional(),
+        autoPublish: z.number().optional(),
+        scheduleTime: z.string().optional(),
+        scheduleDayOfWeek: z.number().optional(),
+        timezone: z.string().optional(),
+        color: z.string().optional(),
         isActive: z.number().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
         await db.updateBlogConfig(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    enableScheduling: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { generateScheduledPosts } = await import("./scheduler");
+        
+        // Get current config
+        const config = await db.getBlogConfigById(input.id, ctx.user.id);
+        if (!config) {
+          throw new Error("Blog configuration not found");
+        }
+
+        // Set default schedule time if not configured
+        const updateData: any = {
+          schedulingEnabled: 1,
+        };
+
+        if (!config.scheduleTime) {
+          updateData.scheduleTime = "09:00";
+        }
+        if (!config.timezone) {
+          updateData.timezone = "America/New_York";
+        }
+        if (config.scheduleDayOfWeek === null && (config.postingFrequency === "weekly" || config.postingFrequency === "biweekly")) {
+          updateData.scheduleDayOfWeek = 1; // Monday
+        }
+
+        // Enable scheduling with defaults
+        await db.updateBlogConfig(input.id, ctx.user.id, updateData);
+
+        // Generate next 3 posts
+        await generateScheduledPosts(input.id, ctx.user.id, 3);
+
+        return { success: true };
+      }),
+
+    disableScheduling: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateBlogConfig(input.id, ctx.user.id, {
+          schedulingEnabled: 0,
+        });
         return { success: true };
       }),
 
@@ -185,10 +336,17 @@ export const appRouter = router({
           throw new Error("Blog configuration not found");
         }
 
+        // Select topic if not provided
+        let topic = input.topic;
+        if (!topic) {
+          const { selectNextTopic } = await import("./topicDiversity");
+          topic = await selectNextTopic(blogConfig, ctx.user.id);
+        }
+
         // Generate content
         const content = await generateBlogPost({
           blogConfig,
-          topic: input.topic,
+          topic,
         });
 
         // Generate featured image if requested
@@ -237,7 +395,7 @@ export const appRouter = router({
         excerpt: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await db.updatePost(input.id, {
+        await db.updatePost(input.id, ctx.user.id, {
           title: input.title,
           content: input.content,
           excerpt: input.excerpt,
@@ -259,11 +417,80 @@ export const appRouter = router({
           `Professional blog post featured image for: ${post.title}`
         );
 
-        await db.updatePost(input.postId, {
+        await db.updatePost(input.postId, ctx.user.id, {
           featuredImageUrl: imageUrl,
         });
 
         return { success: true, imageUrl };
+      }),
+
+    updateSchedule: protectedProcedure
+      .input(z.object({
+        postId: z.number(),
+        scheduledFor: z.string().nullable(),
+        status: z.enum(["draft", "scheduled"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const updateData: any = {
+          status: input.status,
+        };
+
+        if (input.scheduledFor) {
+          updateData.scheduledFor = new Date(input.scheduledFor);
+        } else {
+          updateData.scheduledFor = null;
+        }
+
+        await db.updatePost(input.postId, ctx.user.id, updateData);
+        return { success: true };
+      }),
+
+    regenerateContent: protectedProcedure
+      .input(z.object({
+        postId: z.number(),
+        topic: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { generateBlogPost } = await import("./contentGenerator");
+        const { selectNextTopic } = await import("./topicDiversity");
+
+        // Get the post and its blog config
+        const post = await db.getPostById(input.postId, ctx.user.id);
+        if (!post) {
+          throw new Error("Post not found");
+        }
+
+        const blogConfig = await db.getBlogConfigById(post.blogConfigId, ctx.user.id);
+        if (!blogConfig) {
+          throw new Error("Blog configuration not found");
+        }
+
+        // Select topic if not provided
+        let topic = input.topic;
+        if (!topic) {
+          topic = await selectNextTopic(blogConfig, ctx.user.id);
+        }
+
+        // Generate new content
+        const content = await generateBlogPost({
+          blogConfig,
+          topic,
+        });
+
+        // Update the post with new content (keep image and scheduled date)
+        await db.updatePost(post.id, ctx.user.id, {
+          title: content.title,
+          content: content.content,
+          excerpt: content.excerpt,
+          seoTitle: content.seoTitle,
+          seoDescription: content.seoDescription,
+        });
+
+        return {
+          title: content.title,
+          content: content.content,
+          excerpt: content.excerpt,
+        };
       }),
 
     publish: protectedProcedure
@@ -309,7 +536,7 @@ export const appRouter = router({
           );
 
           // Update post status
-          await db.updatePost(post.id, {
+          await db.updatePost(post.id, ctx.user.id, {
             status: "published",
             wordpressPostId: wpPostId,
             publishedAt: new Date(),
@@ -318,7 +545,7 @@ export const appRouter = router({
           return { success: true, wordpressPostId: wpPostId };
         } catch (error: any) {
           // Update post with error
-          await db.updatePost(post.id, {
+          await db.updatePost(post.id, ctx.user.id, {
             status: "failed",
             errorMessage: error.message,
           });
@@ -331,6 +558,55 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         await db.deletePost(input.id, ctx.user.id);
+        return { success: true };
+      }),
+  }),
+
+  admin: router({
+    listUsers: adminProcedure.query(async () => {
+      const db_instance = await db.getDb();
+      if (!db_instance) return [];
+      
+      const { users, subscriptions } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      
+      // Get all users with their subscriptions
+      const allUsers = await db_instance.select().from(users);
+      const result = [];
+      
+      for (const user of allUsers) {
+        const subscription = await db.getSubscriptionByUserId(user.id);
+        result.push({
+          ...user,
+          subscription,
+        });
+      }
+      
+      return result;
+    }),
+
+    adjustCredits: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        credits: z.number().min(0),
+      }))
+      .mutation(async ({ input }) => {
+        const subscription = await db.getSubscriptionByUserId(input.userId);
+        if (!subscription) {
+          throw new Error("User has no subscription");
+        }
+        
+        await db.updateSubscription(subscription.id, {
+          credits: input.credits,
+        });
+        
+        return { success: true };
+      }),
+
+    resetUserCredits: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.resetCredits(input.userId);
         return { success: true };
       }),
   }),

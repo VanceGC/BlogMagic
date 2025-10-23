@@ -12,6 +12,9 @@ import Settings from "./pages/Settings";
 import Subscription from "./pages/Subscription";
 import Downloads from "./pages/Downloads";
 import PostDetail from "./pages/PostDetail";
+import Calendar from "./pages/Calendar";
+import TrendingTopics from "./pages/TrendingTopics";
+import AdminUsers from "./pages/AdminUsers";
 
 function Router() {
   return (
@@ -21,8 +24,11 @@ function Router() {
       <Route path={"/blogs"} component={BlogConfigs} />
       <Route path={"/posts"} component={Posts} />
       <Route path={"/posts/:id"} component={PostDetail} />
+      <Route path={"/calendar"} component={Calendar} />
+      <Route path={"/trending"} component={TrendingTopics} />
       <Route path={"/settings"} component={Settings} />      <Route path={" /subscription"} component={Subscription} />
       <Route path={"/downloads"} component={Downloads} />
+      <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

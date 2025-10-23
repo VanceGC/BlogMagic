@@ -25,11 +25,15 @@ export default function AppNav() {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard" },
-    { href: "/blogs", label: "Blog Configs" },
     { href: "/posts", label: "Posts" },
-    { href: "/downloads", label: "Downloads" },
+    { href: "/calendar", label: "Calendar" },
+    { href: "/trending", label: "Trending" },
     { href: "/settings", label: "Settings" },
   ];
+
+  const adminNavItems = user?.role === "admin" ? [
+    { href: "/admin/users", label: "👥 Admin" },
+  ] : [];
 
   return (
     <nav className="bg-white border-b sticky top-0 z-50 backdrop-blur-sm bg-white/95">
@@ -47,7 +51,7 @@ export default function AppNav() {
           </Link>
 
           <div className="flex items-center gap-6">
-            {navItems.map((item) => (
+            {[...navItems, ...adminNavItems].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

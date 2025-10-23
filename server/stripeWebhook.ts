@@ -125,6 +125,23 @@ async function handleTrialWillEnd(subscription: Stripe.Subscription) {
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log(`Payment succeeded for invoice: ${invoice.id}`);
+  
+  // Reset credits on monthly renewal
+  const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+  
+  if (subscriptionId) {
+    const existingSubscription = await db.getDb().then(db => 
+      db?.select().from(require('../drizzle/schema').subscriptions)
+        .where(require('drizzle-orm').eq(require('../drizzle/schema').subscriptions.stripeSubscriptionId, subscriptionId))
+        .limit(1)
+    );
+
+    if (existingSubscription && existingSubscription.length > 0) {
+      // Reset credits to 200 on successful payment
+      await db.resetCredits(existingSubscription[0].userId);
+      console.log(`Credits reset for user ${existingSubscription[0].userId}`);
+    }
+  }
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {

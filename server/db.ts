@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem } from "../drizzle/schema";
+import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem, savedTopics, InsertSavedTopic } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,6 +89,32 @@ export async function getUser(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createUser(user: InsertUser) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(users).values(user);
+}
+
+export async function updateUser(openId: string, data: Partial<InsertUser>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(users).set(data).where(eq(users.openId, openId));
+}
+
 // Subscriptions
 export async function getSubscriptionByUserId(userId: number) {
   const db = await getDb();
@@ -107,6 +133,36 @@ export async function updateSubscription(id: number, data: Partial<InsertSubscri
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(subscriptions).set(data).where(eq(subscriptions.id, id));
+}
+
+export async function deductCredits(userId: number, amount: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const subscription = await getSubscriptionByUserId(userId);
+  if (!subscription) {
+    throw new Error("No active subscription found");
+  }
+  
+  if (subscription.credits < amount) {
+    throw new Error("Insufficient credits");
+  }
+  
+  await db.update(subscriptions)
+    .set({ credits: subscription.credits - amount })
+    .where(eq(subscriptions.userId, userId));
+}
+
+export async function resetCredits(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(subscriptions)
+    .set({ 
+      credits: 200,
+      creditsResetAt: new Date()
+    })
+    .where(eq(subscriptions.userId, userId));
 }
 
 // API Keys
@@ -169,6 +225,13 @@ export async function getPostsByBlogConfigId(blogConfigId: number, userId: numbe
   return await db.select().from(posts).where(eq(posts.blogConfigId, blogConfigId));
 }
 
+export async function getPostById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(posts).where(and(eq(posts.id, id), eq(posts.userId, userId))).limit(1);
+  return result[0];
+}
+
 export async function getPostsByUserId(userId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
@@ -182,10 +245,24 @@ export async function createPost(data: InsertPost) {
   return result;
 }
 
-export async function updatePost(id: number, data: Partial<InsertPost>) {
+export async function updatePost(id: number, userId: number, data: Partial<InsertPost>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(posts).set(data).where(eq(posts.id, id));
+  
+  // Filter out undefined values
+  const updateData: Partial<InsertPost> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      updateData[key as keyof InsertPost] = value as any;
+    }
+  }
+  
+  // Check if there's anything to update
+  if (Object.keys(updateData).length === 0) {
+    throw new Error("No values to set");
+  }
+  
+  await db.update(posts).set(updateData).where(and(eq(posts.id, id), eq(posts.userId, userId)));
 }
 
 export async function deletePost(id: number, userId: number) {
@@ -212,4 +289,31 @@ export async function updateQueueItem(id: number, data: Partial<InsertPostQueueI
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(postQueue).set(data).where(eq(postQueue.id, id));
+}
+
+// Saved Topics
+export async function getSavedTopicsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(savedTopics).where(eq(savedTopics.userId, userId)).orderBy(savedTopics.createdAt);
+}
+
+export async function getSavedTopicById(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(savedTopics).where(and(eq(savedTopics.id, id), eq(savedTopics.userId, userId))).limit(1);
+  return result[0];
+}
+
+export async function createSavedTopic(data: InsertSavedTopic) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(savedTopics).values(data);
+  return result;
+}
+
+export async function deleteSavedTopic(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(savedTopics).where(and(eq(savedTopics.id, id), eq(savedTopics.userId, userId)));
 }

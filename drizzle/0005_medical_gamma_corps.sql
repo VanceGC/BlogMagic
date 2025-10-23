@@ -1,0 +1,1 @@
+ALTER TABLE `blogConfigs` ADD `color` varchar(7) DEFAULT '#8B5CF6';

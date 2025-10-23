@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: AI Blog Automation
- * Plugin URI: https://yourdomain.com
- * Description: Automate your blog posting with AI-generated content. Connect to the AI Blog Automation platform to automatically publish SEO-optimized posts.
- * Version: 1.0.0
- * Author: Your Company
- * Author URI: https://yourdomain.com
+ * Plugin Name: BlogMagic
+ * Plugin URI: https://blogmagic.app
+ * Description: Automate your blog posting with AI-generated content. Connect to the BlogMagic platform to automatically publish SEO-optimized posts.
+ * Version: 1.2.0
+ * Author: Blog Magic
+ * Author URI: https://blogmagic.app
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: ai-blog-automation
+ * Text Domain: blogmagic
  */
 
 // Exit if accessed directly
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('AI_BLOG_AUTOMATION_VERSION', '1.0.0');
+define('AI_BLOG_AUTOMATION_VERSION', '1.2.0');
 define('AI_BLOG_AUTOMATION_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AI_BLOG_AUTOMATION_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -59,8 +59,8 @@ class AI_Blog_Automation {
     
     public function add_admin_menu() {
         add_menu_page(
-            'AI Blog Automation',
-            'AI Blog',
+            'BlogMagic',
+            'BlogMagic',
             'manage_options',
             'ai-blog-automation',
             array($this, 'render_admin_page'),
@@ -79,9 +79,7 @@ class AI_Blog_Automation {
     }
     
     public function register_settings() {
-        register_setting('ai_blog_automation_settings', 'ai_blog_automation_api_url');
         register_setting('ai_blog_automation_settings', 'ai_blog_automation_api_key');
-        register_setting('ai_blog_automation_settings', 'ai_blog_automation_auto_publish');
         register_setting('ai_blog_automation_settings', 'ai_blog_automation_default_category');
         register_setting('ai_blog_automation_settings', 'ai_blog_automation_default_author');
     }
@@ -161,15 +159,17 @@ class AI_Blog_Automation {
             ), 400);
         }
         
-        $auto_publish = get_option('ai_blog_automation_auto_publish', 'draft');
         $default_category = get_option('ai_blog_automation_default_category', 1);
         $default_author = get_option('ai_blog_automation_default_author', 1);
+        
+        // Get post status from request (platform controls auto-publish)
+        $post_status = !empty($data['status']) ? $data['status'] : 'draft';
         
         // Prepare post data
         $post_data = array(
             'post_title' => sanitize_text_field($data['title']),
             'post_content' => wp_kses_post($data['content']),
-            'post_status' => $auto_publish === 'publish' ? 'publish' : 'draft',
+            'post_status' => $post_status, // Use status from platform
             'post_author' => $default_author,
             'post_category' => array($default_category),
         );
@@ -270,7 +270,6 @@ register_activation_hook(__FILE__, 'ai_blog_automation_activate');
 
 function ai_blog_automation_activate() {
     // Set default options
-    add_option('ai_blog_automation_auto_publish', 'draft');
     add_option('ai_blog_automation_default_category', 1);
     add_option('ai_blog_automation_default_author', 1);
     

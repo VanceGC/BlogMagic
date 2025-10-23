@@ -42,6 +42,8 @@ export const subscriptions = mysqlTable("subscriptions", {
   currentPeriodStart: timestamp("currentPeriodStart"),
   currentPeriodEnd: timestamp("currentPeriodEnd"),
   canceledAt: timestamp("canceledAt"),
+  credits: int("credits").default(200).notNull(),
+  creditsResetAt: timestamp("creditsResetAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -83,6 +85,13 @@ export const blogConfigs = mysqlTable("blogConfigs", {
   targetAudience: text("targetAudience"),
   toneOfVoice: varchar("toneOfVoice", { length: 100 }).default("professional"),
   postingFrequency: mysqlEnum("postingFrequency", ["daily", "weekly", "biweekly", "monthly"]).default("weekly"),
+  schedulingEnabled: tinyint("schedulingEnabled").default(0).notNull(),
+  autoPublish: tinyint("autoPublish").default(0).notNull(),
+  scheduleTime: varchar("scheduleTime", { length: 5 }),
+  scheduleDayOfWeek: int("scheduleDayOfWeek"),
+  timezone: varchar("timezone", { length: 100 }).default("America/New_York"),
+  color: varchar("color", { length: 7 }).default("#8B5CF6"),
+  lastScheduledAt: timestamp("lastScheduledAt"),
   isActive: tinyint("isActive").default(1).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -132,3 +141,21 @@ export const postQueue = mysqlTable("postQueue", {
 
 export type PostQueueItem = typeof postQueue.$inferSelect;
 export type InsertPostQueueItem = typeof postQueue.$inferInsert;
+
+/**
+ * Saved trending topics
+ */
+export const savedTopics = mysqlTable("savedTopics", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  blogConfigId: int("blogConfigId").notNull(),
+  title: text("title").notNull(),
+  reason: text("reason").notNull(),
+  source: text("source").notNull(),
+  keywords: text("keywords").notNull(), // JSON array stored as text
+  searchVolume: mysqlEnum("searchVolume", ["high", "medium", "low"]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SavedTopic = typeof savedTopics.$inferSelect;
+export type InsertSavedTopic = typeof savedTopics.$inferInsert;
