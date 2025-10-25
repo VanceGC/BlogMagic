@@ -34,13 +34,17 @@ passport.use(
         let user = await db.getUserByEmail(email);
 
         if (!user) {
+          // Check if this is the first user (should be admin)
+          const allUsers = await db.getAllUsers();
+          const isFirstUser = allUsers.length === 0;
+          
           // Create new user
           await db.createUser({
             openId: googleId,
             name: name,
             email: email,
             loginMethod: "google",
-            role: "user",
+            role: isFirstUser ? "admin" : "user",
           });
           user = await db.getUserByEmail(email);
         } else {

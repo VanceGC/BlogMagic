@@ -115,6 +115,12 @@ export async function updateUser(openId: string, data: Partial<InsertUser>) {
   await db.update(users).set(data).where(eq(users.openId, openId));
 }
 
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(users);
+}
+
 // Subscriptions
 export async function getSubscriptionByUserId(userId: number) {
   const db = await getDb();
