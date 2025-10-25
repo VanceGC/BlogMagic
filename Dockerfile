@@ -8,8 +8,9 @@ FROM base AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files AND patches directory (needed for pnpm install)
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -25,8 +26,9 @@ FROM base AS runner
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files AND patches directory (needed for pnpm install)
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 
 # Install production dependencies only
 RUN pnpm install --prod --frozen-lockfile
