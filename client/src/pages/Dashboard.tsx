@@ -47,12 +47,15 @@ export default function Dashboard() {
         <Card className="max-w-md w-full">
           <CardHeader>
             <CardTitle>Welcome to {APP_TITLE}</CardTitle>
-            <CardDescription>Please sign in to access your dashboard</CardDescription>
+            <CardDescription>Sign in with Google to get started - we'll create your account automatically</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full">
-              <a href={getLoginUrl()}>Sign In</a>
+            <Button asChild className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700">
+              <a href={getLoginUrl()}>Sign In with Google →</a>
             </Button>
+            <p className="text-sm text-gray-500 text-center mt-4">
+              New users get 30 days free • No credit card required
+            </p>
           </CardContent>
         </Card>
       </div>
