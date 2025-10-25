@@ -12,31 +12,14 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_API_URL=${OPENAI_API_URL}
+      - OPENAI_API_URL=${OPENAI_API_URL:-https://api.openai.com/v1}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - STRIPE_PRICE_ID=${STRIPE_PRICE_ID}
-      - VITE_APP_TITLE=${VITE_APP_TITLE}
+      - VITE_APP_TITLE=${VITE_APP_TITLE:-BlogMagic}
       - VITE_APP_LOGO=${VITE_APP_LOGO}
       - NODE_ENV=production
-    depends_on:
-      - db
+    network_mode: host
     restart: unless-stopped
-
-  db:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-blogmagic}
-      MYSQL_USER: ${MYSQL_USER:-blogmagic}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-blogmagic}
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    restart: unless-stopped
-
-volumes:
-  mysql_data:
 
