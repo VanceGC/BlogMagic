@@ -105,7 +105,9 @@ Generate topics that would form a well-rounded content calendar with maximum var
     }
   });
 
-  const result = JSON.parse(response.choices[0].message.content || "{}");
+  const content = response.choices[0].message.content;
+  const contentString = typeof content === 'string' ? content : JSON.stringify(content);
+  const result = JSON.parse(contentString || "{}");
   return result.topics?.map((t: any) => t.title) || [];
 }
 
@@ -153,7 +155,7 @@ export async function selectNextTopic(
       // Check for word overlap
       const topicWords = new Set(topicLower.split(/\s+/).filter((w) => w.length > 3));
       const titleWords = new Set(title.split(/\s+/).filter((w) => w.length > 3));
-      const overlap = [...topicWords].filter((w) => titleWords.has(w)).length;
+      const overlap = Array.from(topicWords).filter((w) => titleWords.has(w)).length;
       return overlap > 2; // Too similar if more than 2 words overlap
     });
 

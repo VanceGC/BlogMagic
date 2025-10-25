@@ -53,6 +53,23 @@ export const appRouter = router({
         );
         return { url: session.url };
       }),
+
+    createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
+      const { createPortalSession } = await import("./stripe");
+      const { ENV } = await import("./_core/env");
+      
+      const subscription = await db.getSubscriptionByUserId(ctx.user.id);
+      if (!subscription?.stripeCustomerId) {
+        throw new Error("No Stripe customer found");
+      }
+      
+      const baseUrl = ENV.isProduction ? "https://blogmagic.app" : "http://localhost:3000";
+      const session = await createPortalSession(
+        subscription.stripeCustomerId,
+        `${baseUrl}/subscription`
+      );
+      return { url: session.url };
+    }),
   }),
 
   apiKeys: router({

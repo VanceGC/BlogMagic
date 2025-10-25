@@ -21,6 +21,14 @@ export default function Subscription() {
     },
   });
 
+  const createPortal = trpc.subscription.createPortalSession.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        window.open(data.url, '_blank');
+      }
+    },
+  });
+
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       setLocation("/");
@@ -36,6 +44,7 @@ export default function Subscription() {
   }
 
   const hasActiveSubscription = subscription && subscription.status && ['active', 'trialing'].includes(subscription.status);
+  const isAdmin = user?.role === 'admin';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
@@ -56,16 +65,54 @@ export default function Subscription() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">
-              {hasActiveSubscription ? "Manage Your Subscription" : "Start Your Free Trial"}
+              {isAdmin ? "Admin Access" : hasActiveSubscription ? "Manage Your Subscription" : "Start Your Free Trial"}
             </h2>
             <p className="text-xl text-gray-600">
-              {hasActiveSubscription 
-                ? "You're all set! Manage your subscription below."
-                : "Get 30 days free, then just $9/month to automate your blog with AI"}
+              {isAdmin
+                ? "You have full admin access to all features"
+                : hasActiveSubscription 
+                  ? "You're all set! Manage your subscription below."
+                  : "Get 30 days free, then just $9/month to automate your blog with AI"}
             </p>
           </div>
 
-          {hasActiveSubscription ? (
+          {isAdmin ? (
+            <Card className="border-2 border-blue-200">
+              <CardHeader className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <CardTitle className="text-2xl">Administrator</CardTitle>
+                <CardDescription className="text-lg">
+                  You have unlimited access to all platform features
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="bg-gray-50 rounded-lg p-6 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Access Level:</span>
+                    <span className="font-semibold text-blue-600">Admin - Full Access</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subscription:</span>
+                    <span className="font-semibold">Not Required</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Features:</span>
+                    <span className="font-semibold">Unlimited</span>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> As an administrator, you have full access to all platform features without needing a subscription. You can manage users, view analytics, and access all premium features.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : hasActiveSubscription ? (
             <Card className="border-2 border-green-200">
               <CardHeader className="text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -106,9 +153,10 @@ export default function Subscription() {
                   <Button 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')}
+                    onClick={() => createPortal.mutate()}
+                    disabled={createPortal.isPending}
                   >
-                    Manage Billing in Stripe →
+                    {createPortal.isPending ? "Loading..." : "Manage Billing in Stripe →"}
                   </Button>
                   <p className="text-sm text-gray-500 text-center mt-2">
                     Cancel anytime, no questions asked

@@ -32,7 +32,7 @@ export async function discoverTrendingTopics(
           hl: "en",
           gl: "US",
         },
-      });
+      }) as any;
 
       if (youtubeResults?.contents) {
         const topVideos = youtubeResults.contents
@@ -57,12 +57,12 @@ export async function discoverTrendingTopics(
       
       for (const subreddit of subreddits.slice(0, 2)) {
         try {
-          const redditResults = await callDataApi("Reddit/AccessAPI", {
+          const redditResults = await callDataApi("Reddit/get_hot_posts", {
             query: {
               subreddit,
               limit: "10",
             },
-          });
+          }) as any;
 
           if (redditResults?.posts) {
             const hotPosts = redditResults.posts
@@ -103,7 +103,7 @@ export async function discoverTrendingTopics(
                 hl: "en",
                 gl: "US",
               },
-            });
+            }) as any;
 
             if (channelVideos?.contents) {
               const competitorVideos = channelVideos.contents
@@ -219,7 +219,9 @@ For each topic, explain why it's trending and what makes it compelling.`;
     },
   });
 
-  const result = JSON.parse(response.choices[0].message.content || "{}");
+  const content = response.choices[0].message.content;
+  const contentString = typeof content === 'string' ? content : JSON.stringify(content);
+  const result = JSON.parse(contentString || "{}");
   return result.topics || [];
 }
 

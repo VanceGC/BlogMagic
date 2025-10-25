@@ -26,7 +26,7 @@ function Router() {
       <Route path={"/posts/:id"} component={PostDetail} />
       <Route path={"/calendar"} component={Calendar} />
       <Route path={"/trending"} component={TrendingTopics} />
-      <Route path={"/settings"} component={Settings} />      <Route path={" /subscription"} component={Subscription} />
+      <Route path={"/settings"} component={Settings} />      <Route path={"/subscription"} component={Subscription} />
       <Route path={"/downloads"} component={Downloads} />
       <Route path={"/admin/users"} component={AdminUsers} />
       <Route path={"/404"} component={NotFound} />

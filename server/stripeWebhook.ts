@@ -127,7 +127,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   console.log(`Payment succeeded for invoice: ${invoice.id}`);
   
   // Reset credits on monthly renewal
-  const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id;
+  const subscriptionId = typeof (invoice as any).subscription === 'string' ? (invoice as any).subscription : (invoice as any).subscription?.id;
   
   if (subscriptionId) {
     const existingSubscription = await db.getDb().then(db => 

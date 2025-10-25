@@ -116,6 +116,10 @@ export async function generateScheduledPosts(
 
   // Generate posts for future dates
   for (let i = 0; i < postsToGenerate; i++) {
+    if (!blogConfig.postingFrequency) {
+      console.error("Blog config missing posting frequency");
+      break;
+    }
     const scheduledFor = calculateNextScheduledDate(
       blogConfig.postingFrequency,
       blogConfig.scheduleTime,
