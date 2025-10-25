@@ -118,6 +118,7 @@ export function setupGoogleAuth(app: Express) {
         const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
         const sessionCookie = await new SignJWT({
           openId: user.openId,
+          appId: process.env.VITE_APP_ID || "blogmagic",
           name: user.name,
           email: user.email,
           loginMethod: user.loginMethod,
