@@ -25,15 +25,64 @@ export type GenerateImageOptions = {
     b64Json?: string;
     mimeType?: string;
   }>;
+  apiKey?: string; // Optional: User-provided Stability AI API key
 };
 
 export type GenerateImageResponse = {
   url?: string;
 };
 
+/**
+ * Generate image using Stability AI API
+ */
+async function generateWithStabilityAI(
+  prompt: string,
+  apiKey: string
+): Promise<GenerateImageResponse> {
+  const response = await fetch(
+    "https://api.stability.ai/v2beta/stable-image/generate/ultra",
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        accept: "image/*",
+      },
+      body: JSON.stringify({
+        prompt,
+        output_format: "png",
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(
+      `Stability AI image generation failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
+    );
+  }
+
+  // Stability AI returns the image directly as binary
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  // Save to S3
+  const { url } = await storagePut(
+    `generated/${Date.now()}.png`,
+    buffer,
+    "image/png"
+  );
+
+  return { url };
+}
+
 export async function generateImage(
   options: GenerateImageOptions
 ): Promise<GenerateImageResponse> {
+  // If user provided their own API key, use Stability AI directly
+  if (options.apiKey) {
+    return generateWithStabilityAI(options.prompt, options.apiKey);
+  }
+
+  // Otherwise use built-in Manus image service
   if (!ENV.forgeApiUrl) {
     throw new Error("BUILT_IN_FORGE_API_URL is not configured");
   }

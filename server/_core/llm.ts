@@ -66,6 +66,8 @@ export type InvokeParams = {
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
+  apiKey?: string; // Optional: User-provided API key
+  provider?: 'openai' | 'anthropic'; // Optional: Specify provider
 };
 
 export type ToolCall = {
@@ -214,8 +216,8 @@ const resolveApiUrl = () =>
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
 
-const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
+const assertApiKey = (userApiKey?: string) => {
+  if (!userApiKey && !ENV.forgeApiKey) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
 };
@@ -266,8 +268,6 @@ const normalizeResponseFormat = ({
 };
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
-
   const {
     messages,
     tools,
@@ -277,10 +277,25 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     output_schema,
     responseFormat,
     response_format,
+    apiKey: userApiKey,
+    provider = 'openai',
   } = params;
 
+  assertApiKey(userApiKey);
+
+  // Use user-provided API key if available, otherwise fall back to built-in
+  const apiKey = userApiKey || ENV.forgeApiKey;
+  const apiUrl = userApiKey 
+    ? (provider === 'anthropic' ? 'https://api.anthropic.com/v1/messages' : 'https://api.openai.com/v1/chat/completions')
+    : resolveApiUrl();
+
+  // Select model based on provider
+  const model = userApiKey 
+    ? (provider === 'anthropic' ? 'claude-3-5-sonnet-20241022' : 'gpt-4o')
+    : 'gemini-2.5-flash';
+
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model,
     messages: messages.map(normalizeMessage),
   };
 
@@ -312,11 +327,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(apiUrl, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify(payload),
   });

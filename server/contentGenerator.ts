@@ -14,6 +14,7 @@ interface GeneratedContent {
 
 interface ContentGenerationParams {
   blogConfig: BlogConfig;
+  userId: number;
   topic?: string;
 }
 
@@ -21,7 +22,15 @@ interface ContentGenerationParams {
  * Generate SEO-optimized blog post content using AI
  */
 export async function generateBlogPost(params: ContentGenerationParams): Promise<GeneratedContent> {
-  const { blogConfig, topic } = params;
+  const { blogConfig, userId, topic } = params;
+
+  // Get user's API keys
+  const { getPreferredLLMKey } = await import('./apiKeyHelper');
+  const llmKey = await getPreferredLLMKey(userId);
+  
+  if (!llmKey) {
+    throw new Error('No API key configured. Please add your OpenAI or Anthropic API key in Settings.');
+  }
 
   // Build context for AI
   const context = buildContentContext(blogConfig);
@@ -32,6 +41,8 @@ export async function generateBlogPost(params: ContentGenerationParams): Promise
     : `Generate a comprehensive, SEO-optimized blog post topic and content for the following business:\n\n${context}\n\nChoose a relevant topic that would attract the target audience and rank well in search engines.`;
 
   const response = await invokeLLM({
+    apiKey: llmKey.apiKey,
+    provider: llmKey.provider,
     messages: [
       {
         role: "system",
@@ -106,9 +117,14 @@ export async function generateBlogPost(params: ContentGenerationParams): Promise
 /**
  * Generate featured image for blog post
  */
-export async function generateFeaturedImage(imagePrompt: string): Promise<string> {
+export async function generateFeaturedImage(imagePrompt: string, userId: number): Promise<string> {
+  // Get user's Stability AI key if available
+  const { getUserApiKeys } = await import('./apiKeyHelper');
+  const apiKeys = await getUserApiKeys(userId);
+  
   const result = await generateImage({
     prompt: `Professional blog featured image: ${imagePrompt}. High quality, modern, clean design, suitable for a business blog.`,
+    apiKey: apiKeys.stability, // Optional - will use built-in service if not provided
   });
 
   if (!result.url) {
@@ -149,10 +165,20 @@ function buildContentContext(config: BlogConfig): string {
 /**
  * Generate multiple topic ideas for future posts
  */
-export async function generateTopicIdeas(blogConfig: BlogConfig, count: number = 10): Promise<string[]> {
+export async function generateTopicIdeas(blogConfig: BlogConfig, userId: number, count: number = 10): Promise<string[]> {
+  // Get user's API keys
+  const { getPreferredLLMKey } = await import('./apiKeyHelper');
+  const llmKey = await getPreferredLLMKey(userId);
+  
+  if (!llmKey) {
+    throw new Error('No API key configured. Please add your OpenAI or Anthropic API key in Settings.');
+  }
+
   const context = buildContentContext(blogConfig);
 
   const response = await invokeLLM({
+    apiKey: llmKey.apiKey,
+    provider: llmKey.provider,
     messages: [
       {
         role: "system",

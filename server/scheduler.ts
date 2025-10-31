@@ -134,13 +134,14 @@ export async function generateScheduledPosts(
     // Generate content with the selected topic
     const content = await generateBlogPost({
       blogConfig,
+      userId,
       topic,
     });
 
     // Generate featured image
     let featuredImageUrl: string | undefined;
     try {
-      featuredImageUrl = await generateFeaturedImage(content.featuredImagePrompt);
+      featuredImageUrl = await generateFeaturedImage(content.featuredImagePrompt, userId);
     } catch (error) {
       console.error("Failed to generate image:", error);
     }
