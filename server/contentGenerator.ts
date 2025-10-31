@@ -25,12 +25,21 @@ export async function generateBlogPost(params: ContentGenerationParams): Promise
   const { blogConfig, userId, topic } = params;
 
   // Get user's API keys
-  const { getPreferredLLMKey } = await import('./apiKeyHelper');
+  console.log(`[Content Generator] Generating blog post for user ${userId}`);
+  const { getPreferredLLMKey, getUserApiKeys } = await import('./apiKeyHelper');
   const llmKey = await getPreferredLLMKey(userId);
   
   if (!llmKey) {
+    const allKeys = await getUserApiKeys(userId);
+    console.error(`[Content Generator] No LLM API key found for user ${userId}. Keys in DB:`, {
+      hasOpenAI: !!allKeys.openai,
+      hasAnthropic: !!allKeys.anthropic,
+      hasStability: !!allKeys.stability
+    });
     throw new Error('No API key configured. Please add your OpenAI or Anthropic API key in Settings.');
   }
+  
+  console.log(`[Content Generator] Using ${llmKey.provider} API key for content generation`);
 
   // Build context for AI
   const context = buildContentContext(blogConfig);
@@ -167,12 +176,21 @@ function buildContentContext(config: BlogConfig): string {
  */
 export async function generateTopicIdeas(blogConfig: BlogConfig, userId: number, count: number = 10): Promise<string[]> {
   // Get user's API keys
-  const { getPreferredLLMKey } = await import('./apiKeyHelper');
+  console.log(`[Content Generator] Generating blog post for user ${userId}`);
+  const { getPreferredLLMKey, getUserApiKeys } = await import('./apiKeyHelper');
   const llmKey = await getPreferredLLMKey(userId);
   
   if (!llmKey) {
+    const allKeys = await getUserApiKeys(userId);
+    console.error(`[Content Generator] No LLM API key found for user ${userId}. Keys in DB:`, {
+      hasOpenAI: !!allKeys.openai,
+      hasAnthropic: !!allKeys.anthropic,
+      hasStability: !!allKeys.stability
+    });
     throw new Error('No API key configured. Please add your OpenAI or Anthropic API key in Settings.');
   }
+  
+  console.log(`[Content Generator] Using ${llmKey.provider} API key for content generation`);
 
   const context = buildContentContext(blogConfig);
 
