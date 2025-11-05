@@ -30,8 +30,17 @@ export async function uploadImageToWordPress(
   try {
     console.log('[WordPress Publisher] Downloading image from:', imageUrl);
     
+    // Convert relative URLs to absolute URLs
+    let fullImageUrl = imageUrl;
+    if (imageUrl.startsWith('/')) {
+      // Get the base URL from credentials or use environment variable
+      const baseUrl = process.env.PUBLIC_URL || credentials.url.replace('/wp-json', '');
+      fullImageUrl = `${baseUrl}${imageUrl}`;
+      console.log('[WordPress Publisher] Converted relative URL to:', fullImageUrl);
+    }
+    
     // Download image
-    const imageResponse = await axios.get(imageUrl, { 
+    const imageResponse = await axios.get(fullImageUrl, { 
       responseType: 'arraybuffer',
       timeout: 30000, // 30 second timeout
       maxContentLength: 50 * 1024 * 1024, // 50MB max

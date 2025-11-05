@@ -130,3 +130,16 @@
 - [ ] Test featured image upload end-to-end
 - [ ] Deploy fix to production
 
+
+
+
+## Local File Storage for Images (Replace S3)
+
+- [x] Create local storage module with directory structure: {userEmail}/{blogConfigName}/images/
+- [x] Update image generation to save to local filesystem instead of S3
+- [x] Add static file serving endpoint to serve images from local storage
+- [x] Update WordPress publisher to convert relative URLs to absolute URLs
+- [x] Ensure proper file permissions and security (handled by Express static middleware)
+- [ ] Test end-to-end image generation and WordPress upload
+- [ ] Deploy to production
+

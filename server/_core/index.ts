@@ -45,7 +45,14 @@ async function startServer() {
   const { default: stripeRoutes } = await import('../routes/stripeRoutes.js');
   app.use('/api/stripe', stripeRoutes);
   
-  // Image serving endpoint
+  // Serve locally stored images
+  // This serves files from the uploads directory with proper caching
+  app.use('/uploads', express.static('uploads', {
+    maxAge: '1y', // Cache for 1 year
+    immutable: true,
+  }));
+  
+  // Image serving endpoint (legacy - for database-stored images)
   app.get('/api/images/:id', async (req, res) => {
     try {
       const { getImageById } = await import('../db');

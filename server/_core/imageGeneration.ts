@@ -15,7 +15,7 @@
  *     }]
  *   });
  */
-import { storagePut } from "server/storage";
+import { storagePut } from "../storage";
 import { ENV } from "./env";
 
 export type GenerateImageOptions = {
@@ -30,6 +30,7 @@ export type GenerateImageOptions = {
 
 export type GenerateImageResponse = {
   url?: string;
+  buffer?: Buffer;
 };
 
 /**
@@ -70,13 +71,9 @@ async function generateWithStabilityAI(
   // Stability AI returns the image directly as binary
   const buffer = Buffer.from(await response.arrayBuffer());
 
-  // Save to S3 so WordPress can access it publicly
-  const timestamp = Date.now();
-  const filename = `generated/stability-${timestamp}.png`;
-  const { url } = await storagePut(filename, buffer, "image/png");
-  
-  console.log('[Image Generation] Stability AI image saved to S3:', url);
-  return { url };
+  // Return buffer and let caller handle storage
+  // This allows flexibility in storage location
+  return { buffer };
 }
 
 export async function generateImage(

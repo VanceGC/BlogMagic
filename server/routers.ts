@@ -427,7 +427,7 @@ export const appRouter = router({
         let featuredImageUrl: string | undefined;
         if (input.generateImage) {
           try {
-            featuredImageUrl = await generateFeaturedImage(content.title, content.content, ctx.user.id);
+            featuredImageUrl = await generateFeaturedImage(content.title, content.content, ctx.user.id, input.blogConfigId);
           } catch (error) {
             console.error("Failed to generate image:", error);
           }
@@ -506,7 +506,8 @@ export const appRouter = router({
         const imageUrl = await generateFeaturedImage(
           post.title,
           post.content,
-          ctx.user.id
+          ctx.user.id,
+          post.blogConfigId
         );
 
         await db.updatePost(input.postId, ctx.user.id, {

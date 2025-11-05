@@ -248,7 +248,8 @@ export async function generateBlogPost(params: ContentGenerationParams): Promise
 export async function generateFeaturedImage(
   blogTitle: string,
   blogContent: string,
-  userId: number
+  userId: number,
+  blogConfigId?: number
 ): Promise<string> {
   // Get user's API keys
   const { getUserApiKeys, getPreferredLLMKey } = await import('./apiKeyHelper');
@@ -295,12 +296,39 @@ Provide only the image description, no additional commentary.`
     apiKey: apiKeys.stability,
   });
 
-  if (!result.url) {
-    throw new Error("Failed to generate featured image");
+  // Step 3: Save to local storage if using Stability AI (returns buffer)
+  if (result.buffer && blogConfigId) {
+    console.log('[Featured Image] Step 3: Saving to local storage...');
+    
+    const { getUser } = await import('./db');
+    const { getBlogConfigById } = await import('./db');
+    const { saveImageLocally } = await import('./localStorage');
+    
+    // Get user email and blog config name
+    const user = await getUser(userId.toString());
+    const blogConfig = await getBlogConfigById(blogConfigId, userId);
+    
+    if (!user || !blogConfig) {
+      throw new Error('User or blog config not found');
+    }
+    
+    const userEmail = user.email || `user-${userId}`;
+    const blogConfigName = blogConfig.siteName;
+    
+    // Save to local storage
+    const { url } = await saveImageLocally(userEmail, blogConfigName, result.buffer, 'png');
+    
+    console.log('[Featured Image] Image saved locally:', url);
+    return url;
+  }
+  
+  // If using built-in service (returns URL directly)
+  if (result.url) {
+    console.log('[Featured Image] Image generated successfully:', result.url);
+    return result.url;
   }
 
-  console.log('[Featured Image] Image generated successfully:', result.url);
-  return result.url;
+  throw new Error("Failed to generate featured image");
 }
 
 /**
