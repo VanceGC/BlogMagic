@@ -11,3 +11,9 @@
 - [x] Improve error message to show which user and what keys were found
 - [x] Add console logging to trace API key fetching process
 
+
+
+- [x] Fix trending topics to work without BUILT_IN_FORGE_API_URL
+- [x] Make topic selection fall back to simple AI generation when trending data unavailable
+- [x] Remove hard dependency on Manus built-in APIs for topic discovery
+

@@ -14,7 +14,8 @@ interface TrendingTopic {
  * Discover trending topics based on blog config using multiple sources
  */
 export async function discoverTrendingTopics(
-  blogConfig: BlogConfig
+  blogConfig: BlogConfig,
+  userId?: number
 ): Promise<TrendingTopic[]> {
   const keywords = blogConfig.keywords || "";
   const businessDesc = blogConfig.businessDescription || "";
@@ -158,7 +159,22 @@ Generate 10 blog post topic ideas that:
 
 For each topic, explain why it's trending and what makes it compelling.`;
 
+  // Get user's API keys if userId provided
+  let apiKey: string | undefined;
+  let provider: 'openai' | 'anthropic' | undefined;
+  
+  if (userId) {
+    const { getPreferredLLMKey } = await import('./apiKeyHelper');
+    const llmKey = await getPreferredLLMKey(userId);
+    if (llmKey) {
+      apiKey = llmKey.apiKey;
+      provider = llmKey.provider;
+    }
+  }
+  
   const response = await invokeLLM({
+    apiKey,
+    provider,
     messages: [
       {
         role: "system",
@@ -228,8 +244,8 @@ For each topic, explain why it's trending and what makes it compelling.`;
 /**
  * Select a trending topic for the next blog post
  */
-export async function selectTrendingTopic(blogConfig: BlogConfig): Promise<string | null> {
-  const trendingTopics = await discoverTrendingTopics(blogConfig);
+export async function selectTrendingTopic(blogConfig: BlogConfig, userId?: number): Promise<string | null> {
+  const trendingTopics = await discoverTrendingTopics(blogConfig, userId);
 
   if (trendingTopics.length === 0) {
     return null;
@@ -255,8 +271,9 @@ export async function selectTrendingTopic(blogConfig: BlogConfig): Promise<strin
  * Get trending topic suggestions for user review
  */
 export async function getTrendingSuggestions(
-  blogConfig: BlogConfig
+  blogConfig: BlogConfig,
+  userId?: number
 ): Promise<TrendingTopic[]> {
-  return await discoverTrendingTopics(blogConfig);
+  return await discoverTrendingTopics(blogConfig, userId);
 }
 

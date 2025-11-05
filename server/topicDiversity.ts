@@ -10,6 +10,18 @@ export async function generateDiverseTopics(
   userId: number,
   count: number = 10
 ): Promise<string[]> {
+  console.log(`[Topic Diversity] Generating diverse topics for user ${userId}`);
+  
+  // Get user's API keys
+  const { getPreferredLLMKey } = await import('./apiKeyHelper');
+  const llmKey = await getPreferredLLMKey(userId);
+  
+  if (!llmKey) {
+    throw new Error('No API key configured. Please add your OpenAI or Anthropic API key in Settings.');
+  }
+  
+  console.log(`[Topic Diversity] Using ${llmKey.provider} API key`);
+  
   // Get existing posts to avoid topic repetition
   const existingPosts = await db.getPostsByBlogConfigId(blogConfig.id, userId);
   const existingTitles = existingPosts.map((p) => p.title);
@@ -45,6 +57,8 @@ Requirements:
 Generate topics that would form a well-rounded content calendar with maximum variety.`;
 
   const response = await invokeLLM({
+    apiKey: llmKey.apiKey,
+    provider: llmKey.provider,
     messages: [
       {
         role: "system",
@@ -123,7 +137,7 @@ export async function selectNextTopic(
   if (useTrending && Math.random() > 0.5) {
     try {
       const { selectTrendingTopic } = await import("./trendingTopics");
-      const trendingTopic = await selectTrendingTopic(blogConfig);
+      const trendingTopic = await selectTrendingTopic(blogConfig, userId);
       if (trendingTopic) {
         console.log("Selected trending topic:", trendingTopic);
         return trendingTopic;
