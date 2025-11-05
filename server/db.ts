@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem, savedTopics, InsertSavedTopic } from "../drizzle/schema";
+import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem, savedTopics, InsertSavedTopic, images, InsertImage } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -323,3 +323,22 @@ export async function deleteSavedTopic(id: number, userId: number) {
   if (!db) throw new Error("Database not available");
   await db.delete(savedTopics).where(and(eq(savedTopics.id, id), eq(savedTopics.userId, userId)));
 }
+
+
+// Images
+export async function saveImage(data: InsertImage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(images).values(data);
+  return result[0].insertId;
+}
+
+export async function getImageById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.select().from(images).where(eq(images.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+

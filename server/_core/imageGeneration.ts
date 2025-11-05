@@ -66,13 +66,16 @@ async function generateWithStabilityAI(
   // Stability AI returns the image directly as binary
   const buffer = Buffer.from(await response.arrayBuffer());
 
-  // Save to S3
-  const { url } = await storagePut(
-    `generated/${Date.now()}.png`,
-    buffer,
-    "image/png"
-  );
+  // Save to database instead of S3
+  const { saveImage } = await import("../db");
+  const imageId = await saveImage({
+    data: buffer.toString('base64'), // Store as base64 string
+    mimeType: "image/png",
+    size: buffer.length,
+  });
 
+  // Return URL that points to our image endpoint
+  const url = `/api/images/${imageId}`;
   return { url };
 }
 

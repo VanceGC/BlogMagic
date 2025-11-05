@@ -41,3 +41,13 @@
 - [x] Fix Stability AI API to use multipart/form-data instead of JSON
 - [x] Update generateWithStabilityAI function to use FormData
 
+
+
+## Image Storage Fix (MySQL Database)
+
+- [x] Add images table to database schema (id, data as BLOB, mimeType, createdAt)
+- [x] Create database functions to save and retrieve images
+- [x] Update generateWithStabilityAI to save images to database
+- [x] Add API endpoint to serve images from database (/api/images/:id)
+- [x] Update posts to reference image IDs instead of URLs (posts already store URLs as text, now stores /api/images/:id)
+

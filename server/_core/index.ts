@@ -44,6 +44,33 @@ async function startServer() {
   // Stripe webhook
   const { default: stripeRoutes } = await import('../routes/stripeRoutes.js');
   app.use('/api/stripe', stripeRoutes);
+  
+  // Image serving endpoint
+  app.get('/api/images/:id', async (req, res) => {
+    try {
+      const { getImageById } = await import('../db');
+      const imageId = parseInt(req.params.id);
+      const image = await getImageById(imageId);
+      
+      if (!image) {
+        return res.status(404).send('Image not found');
+      }
+      
+      // Convert base64 back to buffer
+      const buffer = Buffer.from(image.data, 'base64');
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', image.mimeType);
+      res.setHeader('Content-Length', buffer.length);
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      
+      res.send(buffer);
+    } catch (error) {
+      console.error('Error serving image:', error);
+      res.status(500).send('Internal server error');
+    }
+  });
+  
   // tRPC API
   app.use(
     "/api/trpc",

@@ -663,6 +663,23 @@ export const appRouter = router({
         return { success: isConnected };
       }),
   }),
+
+  images: router({
+    get: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input, ctx }) => {
+        const image = await db.getImageById(input.id);
+        if (!image) {
+          throw new Error("Image not found");
+        }
+        
+        // Return base64 data and mime type so client can display it
+        return {
+          data: image.data,
+          mimeType: image.mimeType,
+        };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

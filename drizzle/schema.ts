@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, tinyint } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, tinyint, binary } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -159,3 +159,17 @@ export const savedTopics = mysqlTable("savedTopics", {
 
 export type SavedTopic = typeof savedTopics.$inferSelect;
 export type InsertSavedTopic = typeof savedTopics.$inferInsert;
+
+/**
+ * Generated images stored as binary data
+ */
+export const images = mysqlTable("images", {
+  id: int("id").autoincrement().primaryKey(),
+  data: binary("data", { length: 16777215 }).notNull(), // Binary image data (MEDIUMBLOB)
+  mimeType: varchar("mimeType", { length: 50 }).notNull(), // e.g., "image/png", "image/jpeg"
+  size: int("size").notNull(), // File size in bytes
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Image = typeof images.$inferSelect;
+export type InsertImage = typeof images.$inferInsert;
