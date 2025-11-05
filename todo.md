@@ -325,3 +325,15 @@
 - [x] Deploy to GitHub
 
 
+
+
+
+## Fix Google OAuth Login Error
+
+- [x] Investigate Internal Server Error when logging in with Google
+- [x] Fix upsertUser function to handle nullable openId properly
+- [x] Fix SDK authenticateRequest to check for openId before calling upsertUser
+- [x] Test Google OAuth login (ready for testing after deployment)
+- [ ] Deploy fix to GitHub
+
+
