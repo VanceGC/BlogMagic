@@ -70,16 +70,12 @@ async function generateWithStabilityAI(
   // Stability AI returns the image directly as binary
   const buffer = Buffer.from(await response.arrayBuffer());
 
-  // Save to database instead of S3
-  const { saveImage } = await import("../db");
-  const imageId = await saveImage({
-    data: buffer.toString('base64'), // Store as base64 string
-    mimeType: "image/png",
-    size: buffer.length,
-  });
-
-  // Return URL that points to our image endpoint
-  const url = `/api/images/${imageId}`;
+  // Save to S3 so WordPress can access it publicly
+  const timestamp = Date.now();
+  const filename = `generated/stability-${timestamp}.png`;
+  const { url } = await storagePut(filename, buffer, "image/png");
+  
+  console.log('[Image Generation] Stability AI image saved to S3:', url);
   return { url };
 }
 

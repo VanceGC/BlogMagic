@@ -28,12 +28,25 @@ export async function uploadImageToWordPress(
   title: string
 ): Promise<number> {
   try {
+    console.log('[WordPress Publisher] Downloading image from:', imageUrl);
+    
     // Download image
-    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+    const imageResponse = await axios.get(imageUrl, { 
+      responseType: 'arraybuffer',
+      timeout: 30000, // 30 second timeout
+      maxContentLength: 50 * 1024 * 1024, // 50MB max
+    });
     const imageBuffer = Buffer.from(imageResponse.data);
+    
+    console.log(`[WordPress Publisher] Image downloaded: ${imageBuffer.length} bytes, type: ${imageResponse.headers['content-type']}`);
 
     // Upload to WordPress
     const auth = Buffer.from(`${credentials.username}:${credentials.appPassword}`).toString('base64');
+    const contentType = imageResponse.headers['content-type'] || 'image/png';
+    const extension = contentType.includes('png') ? 'png' : 'jpg';
+    const filename = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.${extension}`;
+    
+    console.log(`[WordPress Publisher] Uploading to WordPress as: ${filename}`);
     
     const response = await axios.post(
       `${credentials.url}/wp-json/wp/v2/media`,
@@ -41,16 +54,23 @@ export async function uploadImageToWordPress(
       {
         headers: {
           'Authorization': `Basic ${auth}`,
-          'Content-Type': imageResponse.headers['content-type'] || 'image/jpeg',
-          'Content-Disposition': `attachment; filename="${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.jpg"`
-        }
+          'Content-Type': contentType,
+          'Content-Disposition': `attachment; filename="${filename}"`
+        },
+        timeout: 60000, // 60 second timeout for upload
       }
     );
 
+    console.log(`[WordPress Publisher] Image uploaded successfully, media ID: ${response.data.id}`);
     return response.data.id;
-  } catch (error) {
-    console.error('Failed to upload image to WordPress:', error);
-    throw new Error('Failed to upload featured image');
+  } catch (error: any) {
+    console.error('[WordPress Publisher] Failed to upload image to WordPress:', {
+      imageUrl,
+      error: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+    });
+    throw new Error(`Failed to upload featured image: ${error.message}`);
   }
 }
 
