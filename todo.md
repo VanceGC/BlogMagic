@@ -143,3 +143,14 @@
 - [ ] Test end-to-end image generation and WordPress upload
 - [ ] Deploy to production
 
+
+
+
+## Fix "Generate Featured Image" Button
+
+- [x] Debug why generateImage procedure shows "User or blog config not found"
+- [x] Fix user/blog config lookup in generateFeaturedImage function (added getUserById)
+- [x] Ensure blog config is properly passed to the function
+- [ ] Test "Generate Featured Image" button on Edit Post page
+- [ ] Deploy fix to production
+

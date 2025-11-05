@@ -300,15 +300,16 @@ Provide only the image description, no additional commentary.`
   if (result.buffer && blogConfigId) {
     console.log('[Featured Image] Step 3: Saving to local storage...');
     
-    const { getUser } = await import('./db');
+    const { getUserById } = await import('./db');
     const { getBlogConfigById } = await import('./db');
     const { saveImageLocally } = await import('./localStorage');
     
     // Get user email and blog config name
-    const user = await getUser(userId.toString());
+    const user = await getUserById(userId);
     const blogConfig = await getBlogConfigById(blogConfigId, userId);
     
     if (!user || !blogConfig) {
+      console.error('[Featured Image] Failed to get user or blog config:', { userId, blogConfigId, user, blogConfig });
       throw new Error('User or blog config not found');
     }
     
