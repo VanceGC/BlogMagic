@@ -265,3 +265,15 @@
 - [x] Push changes to GitHub
 
 
+
+
+
+## Fix Schedule Time Not Updating
+
+- [x] Investigate EditPost.tsx schedule update code
+- [x] Find where time is being lost (only date updates, time stays at 5:00 PM)
+- [x] Fix the schedule update logic to save both date and time (changed + to - in timezone offset calculation)
+- [ ] Test schedule updates with different times
+- [ ] Deploy fix to GitHub
+
+

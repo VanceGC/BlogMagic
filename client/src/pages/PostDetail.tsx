@@ -214,8 +214,9 @@ export default function PostDetail() {
     if (!postId || !scheduledFor) return;
     
     // Convert local datetime to UTC
+    // scheduledFor is in format "2025-11-12T10:00" which represents local time
     const localDate = new Date(scheduledFor);
-    const utcDate = new Date(localDate.getTime() + localDate.getTimezoneOffset() * 60000);
+    const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
     
     updateSchedule.mutate({
       postId,
