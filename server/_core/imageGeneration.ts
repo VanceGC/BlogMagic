@@ -43,6 +43,10 @@ async function generateWithStabilityAI(
   const formData = new FormData();
   formData.append("prompt", prompt);
   formData.append("output_format", "png");
+  // WordPress recommended featured image size
+  formData.append("aspect_ratio", "16:9"); // Closest to 1200x628
+  // Prevent text in images
+  formData.append("negative_prompt", "text, words, letters, captions, watermarks, signatures, typography, writing");
   
   const response = await fetch(
     "https://api.stability.ai/v2beta/stable-image/generate/ultra",

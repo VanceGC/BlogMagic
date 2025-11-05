@@ -371,7 +371,7 @@ export const appRouter = router({
         let featuredImageUrl: string | undefined;
         if (input.generateImage) {
           try {
-            featuredImageUrl = await generateFeaturedImage(content.featuredImagePrompt, ctx.user.id);
+            featuredImageUrl = await generateFeaturedImage(content.title, content.content, ctx.user.id);
           } catch (error) {
             console.error("Failed to generate image:", error);
           }
@@ -430,9 +430,10 @@ export const appRouter = router({
           throw new Error("Post not found");
         }
 
-        // Generate image from post title
+        // Generate image from post title and content
         const imageUrl = await generateFeaturedImage(
-          `Professional blog post featured image for: ${post.title}`,
+          post.title,
+          post.content,
           ctx.user.id
         );
 

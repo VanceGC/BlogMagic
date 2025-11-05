@@ -58,3 +58,21 @@
 - [x] Change images.data column from binary(16777215) to LONGTEXT
 - [x] MySQL error: "Column length too big for column 'data' (max = 255); use BLOB or TEXT instead"
 
+
+
+## Drizzle-Kit Migration Bug
+
+- [ ] drizzle-kit still generating `binary(16777215)` even though schema uses `text()`
+- [ ] Create manual SQL migration to bypass drizzle-kit bug
+- [ ] Create images table directly in MySQL database
+
+
+
+## Improved Featured Image Generation
+
+- [x] Add AI analysis step: read blog post and generate professional image prompt
+- [x] Use OpenAI/Anthropic to analyze post content and create detailed visual description
+- [x] Update Stability AI to use WordPress featured image size (16:9 aspect ratio for 1200x628)
+- [x] Add explicit instructions to prevent text/captions in generated images (negative prompt)
+- [x] Default to OpenAI if both API keys are available (implemented in getPreferredLLMKey)
+

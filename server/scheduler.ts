@@ -141,7 +141,7 @@ export async function generateScheduledPosts(
     // Generate featured image
     let featuredImageUrl: string | undefined;
     try {
-      featuredImageUrl = await generateFeaturedImage(content.featuredImagePrompt, userId);
+      featuredImageUrl = await generateFeaturedImage(content.title, content.content, userId);
     } catch (error) {
       console.error("Failed to generate image:", error);
     }

@@ -124,22 +124,63 @@ export async function generateBlogPost(params: ContentGenerationParams): Promise
 }
 
 /**
- * Generate featured image for blog post
+ * Generate featured image for blog post with AI-powered prompt analysis
  */
-export async function generateFeaturedImage(imagePrompt: string, userId: number): Promise<string> {
-  // Get user's Stability AI key if available
-  const { getUserApiKeys } = await import('./apiKeyHelper');
+export async function generateFeaturedImage(
+  blogTitle: string,
+  blogContent: string,
+  userId: number
+): Promise<string> {
+  // Get user's API keys
+  const { getUserApiKeys, getPreferredLLMKey } = await import('./apiKeyHelper');
   const apiKeys = await getUserApiKeys(userId);
+  const llmKeyResult = await getPreferredLLMKey(userId);
+  if (!llmKeyResult) {
+    throw new Error('No LLM API key configured. Please add an OpenAI or Anthropic API key in Settings.');
+  }
+  const { apiKey: llmApiKey, provider: llmProvider } = llmKeyResult;
+
+  // Step 1: Use AI to analyze the blog post and create a professional image prompt
+  console.log('[Featured Image] Step 1: Analyzing blog post with AI to create image prompt...');
+  
+  const analysisResponse = await invokeLLM({
+    messages: [
+      {
+        role: 'system',
+        content: `You are a professional blog editor tasked with creating featured images. Analyze the blog post and describe a professional, visually striking image that would make an excellent featured image. Focus on:
+- Visual metaphors and symbolism relevant to the content
+- Professional, modern aesthetic
+- Clean, uncluttered composition
+- NO text, captions, or words in the image
+- Suitable for a business/professional blog
+
+Provide only the image description, no additional commentary.`
+      },
+      {
+        role: 'user',
+        content: `Blog Title: ${blogTitle}\n\nBlog Content:\n${blogContent.substring(0, 2000)}...\n\nCreate a detailed visual description for the featured image:`
+      }
+    ],
+    apiKey: llmApiKey,
+    provider: llmProvider,
+  });
+
+  const imageDescription = analysisResponse.choices[0].message.content;
+  console.log('[Featured Image] AI-generated image description:', imageDescription);
+
+  // Step 2: Generate the image with Stability AI using the refined prompt
+  console.log('[Featured Image] Step 2: Generating image with Stability AI...');
   
   const result = await generateImage({
-    prompt: `Professional blog featured image: ${imagePrompt}. High quality, modern, clean design, suitable for a business blog.`,
-    apiKey: apiKeys.stability, // Optional - will use built-in service if not provided
+    prompt: `Professional blog featured image, WordPress optimized: ${imageDescription}. High quality, modern, clean design. IMPORTANT: No text, no captions, no words, no letters in the image.`,
+    apiKey: apiKeys.stability,
   });
 
   if (!result.url) {
-    throw new Error("Failed to generate image");
+    throw new Error("Failed to generate featured image");
   }
 
+  console.log('[Featured Image] Image generated successfully:', result.url);
   return result.url;
 }
 
