@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { APP_TITLE, getLoginUrl } from "@/const";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 export default function Dashboard() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const [selectedBlogId, setSelectedBlogId] = React.useState<number | null>(null);
 
   const { data: subscription } = trpc.subscription.get.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -18,6 +20,13 @@ export default function Dashboard() {
   const { data: blogConfigs, refetch: refetchBlogs } = trpc.blogConfigs.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  
+  // Auto-select first blog if none selected
+  React.useEffect(() => {
+    if (blogConfigs && blogConfigs.length > 0 && !selectedBlogId) {
+      setSelectedBlogId(blogConfigs[0].id);
+    }
+  }, [blogConfigs, selectedBlogId]);
 
   const generatePost = trpc.posts.generate.useMutation({
     onSuccess: () => {
@@ -133,6 +142,25 @@ export default function Dashboard() {
               <Button asChild className="w-full" variant="outline">
                 <Link href="/settings">🔑 Configure API Keys</Link>
               </Button>
+              
+              {/* Blog Selection Dropdown */}
+              {totalBlogs > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Select Blog:</label>
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    value={selectedBlogId || ""}
+                    onChange={(e) => setSelectedBlogId(Number(e.target.value))}
+                  >
+                    {blogConfigs?.map((blog) => (
+                      <option key={blog.id} value={blog.id}>
+                        {blog.siteName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
               <Button
                 className="w-full"
                 variant="outline"
@@ -140,14 +168,13 @@ export default function Dashboard() {
                   if (totalBlogs === 0) {
                     toast.error("Please create a blog configuration first");
                     setLocation("/blogs");
+                  } else if (!selectedBlogId) {
+                    toast.error("Please select a blog configuration");
                   } else {
-                    const firstBlog = blogConfigs?.[0];
-                    if (firstBlog) {
-                      generatePost.mutate({ blogConfigId: firstBlog.id });
-                    }
+                    generatePost.mutate({ blogConfigId: selectedBlogId });
                   }
                 }}
-                disabled={generatePost.isPending}
+                disabled={generatePost.isPending || !selectedBlogId}
               >
                 ✨ {generatePost.isPending ? "Generating..." : "Generate New Post"}
               </Button>

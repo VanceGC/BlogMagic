@@ -17,3 +17,13 @@
 - [x] Make topic selection fall back to simple AI generation when trending data unavailable
 - [x] Remove hard dependency on Manus built-in APIs for topic discovery
 
+
+
+## Critical Issues to Fix
+
+- [x] Remove "thinking" parameter from LLM invoke calls (causing 400 error)
+- [x] Add blog selection dropdown to dashboard for multi-blog support
+- [x] Fix VITE_APP_TITLE to show "BlogMagic" instead of "%VITE_APP_TITLE%"
+- [x] Fix all undefined VITE variables in production build
+- [x] Verify post generation works end-to-end with user API keys
+
