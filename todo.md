@@ -334,6 +334,20 @@
 - [x] Fix upsertUser function to handle nullable openId properly
 - [x] Fix SDK authenticateRequest to check for openId before calling upsertUser
 - [x] Test Google OAuth login (ready for testing after deployment)
-- [ ] Deploy fix to GitHub
+- [x] Deploy fix to GitHub
+
+
+
+
+
+## Debug Persistent Google OAuth Error
+
+- [x] Check database schema for openId constraint (nullable vs required)
+- [x] Review Google OAuth callback handler in googleAuth.ts
+- [x] Found root cause: Database missing password columns
+- [x] Create SQL migration script to add password columns
+- [ ] Run migration on production database
+- [ ] Test Google OAuth login after migration
+- [ ] Deploy migration script to GitHub
 
 
