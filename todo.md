@@ -273,7 +273,21 @@
 - [x] Investigate EditPost.tsx schedule update code
 - [x] Find where time is being lost (only date updates, time stays at 5:00 PM)
 - [x] Fix the schedule update logic to save both date and time (changed + to - in timezone offset calculation)
-- [ ] Test schedule updates with different times
-- [ ] Deploy fix to GitHub
+- [x] Test schedule updates with different times
+- [x] Deploy fix to GitHub
+
+
+
+
+
+## Make Schedule Times Timezone-Aware
+
+- [x] Check if blog config has timezone field in database
+- [x] Update PostDetail to fetch blog config timezone
+- [x] Display scheduled time in blog config timezone (not browser timezone)
+- [x] Convert user input time from blog config timezone to UTC for storage
+- [x] Add timezone display to edit page (e.g., "10:00 AM Phoenix Time")
+- [ ] Test with different timezones
+- [ ] Deploy timezone-aware scheduling
 
 

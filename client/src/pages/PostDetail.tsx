@@ -1,4 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { format } from "date-fns";
+import { formatInTimeZone, toZonedTime, fromZonedTime } from "date-fns-tz";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -145,11 +147,13 @@ export default function PostDetail() {
       }
       
       if (post.scheduledFor) {
-        // Convert to local datetime-local format
-        const date = new Date(post.scheduledFor);
-        const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(0, 16);
+        // Get the blog config's timezone
+        const blogConfig = blogConfigs?.find(bc => bc.id === post.blogConfigId);
+        const timezone = blogConfig?.timezone || "America/New_York";
+        
+        // Convert UTC time to blog config timezone and format for datetime-local input
+        const zonedDate = toZonedTime(new Date(post.scheduledFor), timezone);
+        const localDateTime = formatInTimeZone(zonedDate, timezone, "yyyy-MM-dd'T'HH:mm");
         setScheduledFor(localDateTime);
       } else {
         setScheduledFor("");
@@ -211,16 +215,19 @@ export default function PostDetail() {
   };
 
   const handleSchedulePost = () => {
-    if (!postId || !scheduledFor) return;
+    if (!postId || !scheduledFor || !post) return;
     
-    // Convert local datetime to UTC
-    // scheduledFor is in format "2025-11-12T10:00" which represents local time
-    const localDate = new Date(scheduledFor);
-    const utcDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+    // Get the blog config's timezone
+    const blogConfig = blogConfigs?.find(bc => bc.id === post.blogConfigId);
+    const timezone = blogConfig?.timezone || "America/New_York";
+    
+    // scheduledFor is in format "2025-11-12T10:00" representing time in the blog config's timezone
+    // Convert from blog config timezone to UTC
+    const zonedDate = fromZonedTime(scheduledFor, timezone);
     
     updateSchedule.mutate({
       postId,
-      scheduledFor: utcDate.toISOString(),
+      scheduledFor: zonedDate.toISOString(),
       status: "scheduled",
     });
   };
@@ -421,23 +428,28 @@ export default function PostDetail() {
                       className="w-full"
                     />
                     <p className="text-sm text-gray-500">
-                      Select when this post should be published (in your local timezone)
+                      Select when this post should be published (in {blogConfigs?.find(bc => bc.id === post?.blogConfigId)?.timezone || "blog"} timezone)
                     </p>
                   </div>
 
-                  {post.status === "scheduled" && post.scheduledFor && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                      <p className="text-sm font-medium text-purple-900 mb-1">
-                        Currently scheduled for:
-                      </p>
-                      <p className="text-sm text-purple-700">
-                        {new Date(post.scheduledFor).toLocaleString(undefined, {
-                          dateStyle: "full",
-                          timeStyle: "short",
-                        })}
-                      </p>
-                    </div>
-                  )}
+                  {post.status === "scheduled" && post.scheduledFor && (() => {
+                    const blogConfig = blogConfigs?.find(bc => bc.id === post.blogConfigId);
+                    const timezone = blogConfig?.timezone || "America/New_York";
+                    const zonedDate = toZonedTime(new Date(post.scheduledFor), timezone);
+                    const formatted = formatInTimeZone(zonedDate, timezone, "EEEE, MMMM d, yyyy 'at' h:mm a");
+                    const tzName = timezone.split("/").pop()?.replace("_", " ") || "";
+                    
+                    return (
+                      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <p className="text-sm font-medium text-purple-900 mb-1">
+                          Currently scheduled for:
+                        </p>
+                        <p className="text-sm text-purple-700">
+                          {formatted} ({tzName} Time)
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   <div className="flex gap-3">
                     <Button
