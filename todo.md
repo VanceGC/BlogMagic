@@ -27,3 +27,10 @@
 - [x] Fix all undefined VITE variables in production build
 - [x] Verify post generation works end-to-end with user API keys
 
+
+
+## URGENT: max_tokens Error
+
+- [x] Fix max_tokens from 32768 to 16384 (OpenAI model limit)
+- [x] Use model-specific token limits (GPT-4o: 16384, Claude: 8192)
+

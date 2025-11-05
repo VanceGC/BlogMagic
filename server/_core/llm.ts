@@ -311,7 +311,15 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
+  // Set max_tokens based on provider and model
+  // OpenAI GPT-4o/GPT-4o-mini: 16384 max output tokens
+  // Anthropic Claude: 8192 max output tokens
+  if (provider === 'anthropic') {
+    payload.max_tokens = 8192;
+  } else {
+    // OpenAI or default
+    payload.max_tokens = 16384;
+  }
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
