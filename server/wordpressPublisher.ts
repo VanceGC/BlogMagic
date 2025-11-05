@@ -28,30 +28,48 @@ export async function uploadImageToWordPress(
   title: string
 ): Promise<number> {
   try {
-    console.log('[WordPress Publisher] Downloading image from:', imageUrl);
+    console.log('[WordPress Publisher] Processing image:', imageUrl);
     
-    // Convert relative URLs to absolute URLs
-    let fullImageUrl = imageUrl;
-    if (imageUrl.startsWith('/')) {
-      // Get the base URL from credentials or use environment variable
-      const baseUrl = process.env.PUBLIC_URL || credentials.url.replace('/wp-json', '');
-      fullImageUrl = `${baseUrl}${imageUrl}`;
-      console.log('[WordPress Publisher] Converted relative URL to:', fullImageUrl);
+    let imageBuffer: Buffer;
+    let contentType: string;
+    
+    // If it's a local file path (starts with /uploads), read from filesystem
+    if (imageUrl.startsWith('/uploads/')) {
+      console.log('[WordPress Publisher] Reading image from local filesystem...');
+      
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      
+      // Convert URL path to filesystem path
+      const filePath = path.join(process.cwd(), imageUrl);
+      console.log('[WordPress Publisher] File path:', filePath);
+      
+      try {
+        imageBuffer = await fs.readFile(filePath);
+        // Determine content type from file extension
+        const ext = path.extname(filePath).toLowerCase();
+        contentType = ext === '.png' ? 'image/png' : 'image/jpeg';
+        console.log(`[WordPress Publisher] Image loaded from filesystem: ${imageBuffer.length} bytes, type: ${contentType}`);
+      } catch (fsError: any) {
+        console.error('[WordPress Publisher] Failed to read image from filesystem:', fsError.message);
+        throw new Error(`Failed to read image file: ${fsError.message}`);
+      }
+    } else {
+      // External URL - download via HTTP
+      console.log('[WordPress Publisher] Downloading image from URL...');
+      
+      const imageResponse = await axios.get(imageUrl, { 
+        responseType: 'arraybuffer',
+        timeout: 30000, // 30 second timeout
+        maxContentLength: 50 * 1024 * 1024, // 50MB max
+      });
+      imageBuffer = Buffer.from(imageResponse.data);
+      contentType = imageResponse.headers['content-type'] || 'image/png';
+      console.log(`[WordPress Publisher] Image downloaded: ${imageBuffer.length} bytes, type: ${contentType}`);
     }
-    
-    // Download image
-    const imageResponse = await axios.get(fullImageUrl, { 
-      responseType: 'arraybuffer',
-      timeout: 30000, // 30 second timeout
-      maxContentLength: 50 * 1024 * 1024, // 50MB max
-    });
-    const imageBuffer = Buffer.from(imageResponse.data);
-    
-    console.log(`[WordPress Publisher] Image downloaded: ${imageBuffer.length} bytes, type: ${imageResponse.headers['content-type']}`);
 
     // Upload to WordPress
     const auth = Buffer.from(`${credentials.username}:${credentials.appPassword}`).toString('base64');
-    const contentType = imageResponse.headers['content-type'] || 'image/png';
     const extension = contentType.includes('png') ? 'png' : 'jpg';
     const filename = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.${extension}`;
     
