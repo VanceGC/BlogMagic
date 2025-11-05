@@ -2,7 +2,11 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        - VITE_APP_TITLE=${VITE_APP_TITLE:-BlogMagic}
+        - VITE_APP_LOGO=${VITE_APP_LOGO}
     ports:
       - "${PORT:-3000}:3000"
     environment:
@@ -17,8 +21,6 @@ services:
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - STRIPE_PRICE_ID=${STRIPE_PRICE_ID}
-      - VITE_APP_TITLE=${VITE_APP_TITLE:-BlogMagic}
-      - VITE_APP_LOGO=${VITE_APP_LOGO}
       - NODE_ENV=production
     network_mode: host
     restart: unless-stopped

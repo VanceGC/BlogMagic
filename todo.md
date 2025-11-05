@@ -254,3 +254,14 @@
 - [ ] Test that category selection works without infinite loop
 - [ ] Deploy the fix
 
+
+
+
+## Docker VITE Environment Variables Fix
+
+- [x] Update docker-compose.yml to pass VITE variables as build arguments
+- [x] Update Dockerfile to accept and use VITE build arguments during build stage
+- [ ] Test Docker build with VITE variables properly injected
+- [ ] Push changes to GitHub
+
+

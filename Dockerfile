@@ -8,6 +8,14 @@ FROM base AS builder
 
 WORKDIR /app
 
+# Accept build arguments
+ARG VITE_APP_TITLE=BlogMagic
+ARG VITE_APP_LOGO
+
+# Set as environment variables for the build
+ENV VITE_APP_TITLE=$VITE_APP_TITLE
+ENV VITE_APP_LOGO=$VITE_APP_LOGO
+
 # Copy package files AND patches directory (needed for pnpm install)
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
