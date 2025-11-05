@@ -34,3 +34,10 @@
 - [x] Fix max_tokens from 32768 to 16384 (OpenAI model limit)
 - [x] Use model-specific token limits (GPT-4o: 16384, Claude: 8192)
 
+
+
+## Stability AI Image Generation Fix
+
+- [x] Fix Stability AI API to use multipart/form-data instead of JSON
+- [x] Update generateWithStabilityAI function to use FormData
+

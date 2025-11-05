@@ -39,6 +39,11 @@ async function generateWithStabilityAI(
   prompt: string,
   apiKey: string
 ): Promise<GenerateImageResponse> {
+  // Stability AI requires multipart/form-data
+  const formData = new FormData();
+  formData.append("prompt", prompt);
+  formData.append("output_format", "png");
+  
   const response = await fetch(
     "https://api.stability.ai/v2beta/stable-image/generate/ultra",
     {
@@ -47,10 +52,7 @@ async function generateWithStabilityAI(
         authorization: `Bearer ${apiKey}`,
         accept: "image/*",
       },
-      body: JSON.stringify({
-        prompt,
-        output_format: "png",
-      }),
+      body: formData,
     }
   );
 
