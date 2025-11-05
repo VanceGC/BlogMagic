@@ -261,7 +261,7 @@
 
 - [x] Update docker-compose.yml to pass VITE variables as build arguments
 - [x] Update Dockerfile to accept and use VITE build arguments during build stage
-- [ ] Test Docker build with VITE variables properly injected
-- [ ] Push changes to GitHub
+- [x] Test Docker build with VITE variables properly injected
+- [x] Push changes to GitHub
 
 
