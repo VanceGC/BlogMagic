@@ -85,21 +85,74 @@ Return ONLY the JSON array, no other text.`;
 }
 
 /**
- * Search the web for information (mock implementation - would use real search API in production)
- * In production, this would integrate with Google Custom Search API, Bing Search API, or similar
+ * Check if Google Custom Search API credentials are available
+ */
+export function hasGoogleSearchCredentials(): boolean {
+  const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
+  const cx = process.env.GOOGLE_SEARCH_CX;
+  return !!(apiKey && cx);
+}
+
+/**
+ * Search the web using Google Custom Search API
  */
 async function searchWeb(query: string): Promise<ExternalSource[]> {
   console.log(`[Web Research] Searching web for: ${query}`);
   
-  // Mock implementation - returns empty array
-  // In production, integrate with a real search API:
-  // - Google Custom Search API
-  // - Bing Web Search API
-  // - SerpAPI
-  // - Brave Search API
+  const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
+  const cx = process.env.GOOGLE_SEARCH_CX;
   
-  console.log('[Web Research] Web search not implemented - would integrate with search API in production');
-  return [];
+  if (!apiKey || !cx) {
+    console.log('[Web Research] Google Search API credentials not configured - skipping web search');
+    return [];
+  }
+  
+  try {
+    const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}&num=5`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'BlogMagic/1.0',
+      },
+    });
+    
+    if (!response.ok) {
+      console.error(`[Web Research] Google Search API error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+    
+    const data = await response.json() as any;
+    
+    if (!data.items || data.items.length === 0) {
+      console.log('[Web Research] No search results found');
+      return [];
+    }
+    
+    const sources: ExternalSource[] = data.items.map((item: any) => {
+      const url = item.link || '';
+      let domain = '';
+      try {
+        domain = new URL(url).hostname.replace('www.', '');
+      } catch (e) {
+        domain = 'unknown';
+      }
+      
+      return {
+        url,
+        title: item.title || '',
+        domain,
+        snippet: item.snippet || '',
+        relevance: 0.7, // Default relevance, will be evaluated by AI
+      };
+    });
+    
+    console.log(`[Web Research] Found ${sources.length} search results from Google`);
+    return sources;
+    
+  } catch (error) {
+    console.error('[Web Research] Error searching with Google Custom Search API:', error);
+    return [];
+  }
 }
 
 /**

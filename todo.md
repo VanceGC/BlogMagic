@@ -107,3 +107,14 @@
 - [x] Run SEO optimization pass before finalizing
 - [x] Log SEO scores for tracking improvements
 
+
+
+
+## Google Custom Search API Integration
+
+- [x] Integrate Google Custom Search API into webResearch.ts
+- [x] Auto-detect GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_CX environment variables
+- [x] Change enableResearch default to true when credentials are present
+- [ ] Test Google Search integration
+- [x] Update deployment documentation
+

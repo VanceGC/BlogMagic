@@ -183,10 +183,15 @@ The `posts.generate` endpoint has these defaults:
 ```typescript
 {
   enableSEO: true,              // ✅ SEO optimization ON by default
-  enableResearch: false,         // ❌ Web research OFF (requires search API)
+  enableResearch: auto,          // ✅ Auto-enabled when GOOGLE_SEARCH_API_KEY is set
   enableInternalLinks: true,     // ✅ Internal links ON by default
 }
 ```
+
+**Web Research Auto-Enable:**
+- If `GOOGLE_SEARCH_API_KEY` and `GOOGLE_SEARCH_CX` are set in `.env`, research is **automatically enabled**
+- You can explicitly disable it by passing `enableResearch: false`
+- You can explicitly enable it by passing `enableResearch: true` (will fail gracefully if no API key)
 
 ### Customizing SEO Behavior
 
@@ -208,52 +213,53 @@ const { optimized, analysis } = await performSEOOptimization(
 - **80** = More aggressive optimization
 - **60** = Less aggressive optimization
 
-## Web Research Integration (Optional)
+## Web Research Integration
 
-The web research feature is currently a **framework** ready for API integration. To enable it:
+The web research feature is **fully integrated** with Google Custom Search API and automatically enabled when credentials are present.
 
-### Option 1: Google Custom Search API
+### Setup Google Custom Search API
 
-1. Get API key from https://developers.google.com/custom-search/v1/overview
-2. Edit `server/lib/webResearch.ts`:
+1. **Get API Key:**
+   - Go to https://developers.google.com/custom-search/v1/overview
+   - Click "Get a Key"
+   - Create or select a project
+   - Copy your API key
 
-```typescript
-async function searchWeb(query: string): Promise<ExternalSource[]> {
-  const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
-  const cx = process.env.GOOGLE_SEARCH_CX;
-  
-  const response = await fetch(
-    `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${encodeURIComponent(query)}`
-  );
-  
-  const data = await response.json();
-  
-  return data.items.map(item => ({
-    url: item.link,
-    title: item.title,
-    domain: new URL(item.link).hostname,
-    snippet: item.snippet,
-    relevance: 0.8,
-  }));
-}
+2. **Create Custom Search Engine:**
+   - Go to https://programmablesearchengine.google.com/
+   - Click "Add" to create a new search engine
+   - Under "Sites to search", enter `*` to search the entire web
+   - Copy your Search Engine ID (CX)
+
+3. **Add to `.env`:**
+```bash
+GOOGLE_SEARCH_API_KEY=your_api_key_here
+GOOGLE_SEARCH_CX=your_search_engine_id_here
 ```
 
-3. Add to `.env`:
+4. **Restart your server:**
+```bash
+docker-compose restart
 ```
-GOOGLE_SEARCH_API_KEY=your_key_here
-GOOGLE_SEARCH_CX=your_cx_here
-```
 
-### Option 2: SerpAPI
+**That's it!** Web research will now automatically run when generating posts.
 
-1. Get API key from https://serpapi.com/
-2. Install package: `pnpm add serpapi`
-3. Edit `server/lib/webResearch.ts` to use SerpAPI
+### Alternative Search APIs
 
-### Option 3: Brave Search API
+If you prefer not to use Google, you can modify `server/lib/webResearch.ts` to use:
 
-1. Get API key from https://brave.com/search/api/
-2. Edit `server/lib/webResearch.ts` to use Brave Search
+**SerpAPI:**
+- Get API key from https://serpapi.com/
+- Install: `pnpm add serpapi`
+- Modify the `searchWeb()` function
+
+**Brave Search API:**
+- Get API key from https://brave.com/search/api/
+- Modify the `searchWeb()` function
+
+**Bing Web Search API:**
+- Get API key from Azure Cognitive Services
+- Modify the `searchWeb()` function
 
 ## SEO Scoring System
 

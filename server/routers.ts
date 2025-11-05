@@ -392,10 +392,14 @@ export const appRouter = router({
         topic: z.string().optional(),
         generateImage: z.boolean().default(true),
         enableSEO: z.boolean().default(true),
-        enableResearch: z.boolean().default(false),
+        enableResearch: z.boolean().optional(),
         enableInternalLinks: z.boolean().default(true),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Auto-enable research if Google Search credentials are present and not explicitly disabled
+        const { hasGoogleSearchCredentials } = await import("./lib/webResearch");
+        const enableResearch = input.enableResearch ?? hasGoogleSearchCredentials();
+        
         // Get blog config
         const blogConfig = await db.getBlogConfigById(input.blogConfigId, ctx.user.id);
         if (!blogConfig) {
@@ -415,7 +419,7 @@ export const appRouter = router({
           userId: ctx.user.id,
           topic,
           enableSEO: input.enableSEO,
-          enableResearch: input.enableResearch,
+          enableResearch,
           enableInternalLinks: input.enableInternalLinks,
         });
 
