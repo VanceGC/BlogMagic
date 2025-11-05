@@ -127,6 +127,13 @@ export async function updateUser(openId: string, data: Partial<InsertUser>) {
   await db.update(users).set(data).where(eq(users.openId, openId));
 }
 
+export async function updateUserById(id: number, data: Partial<InsertUser>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.update(users).set(data).where(eq(users.id, id));
+}
+
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];

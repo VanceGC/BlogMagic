@@ -49,9 +49,11 @@ passport.use(
           user = await db.getUserByEmail(email);
         } else {
           // Update last signed in
-          await db.updateUser(user.openId, {
-            lastSignedIn: new Date(),
-          });
+          if (user.openId) {
+            await db.updateUser(user.openId, {
+              lastSignedIn: new Date(),
+            });
+          }
         }
 
         return done(null, user);

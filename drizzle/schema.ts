@@ -12,12 +12,20 @@ export const users = mysqlTable("users", {
    */
   id: int("id").autoincrement().primaryKey(),
   /**
-   * Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user.
-   * This mirrors the Manus account and should be used for authentication lookups.
+   * OAuth identifier (openId) for Google OAuth users. Nullable for email/password users.
    */
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  openId: varchar("openId", { length: 64 }).unique(),
   name: text("name"),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).unique(),
+  /**
+   * Hashed password for email/password authentication. Nullable for OAuth users.
+   */
+  password: varchar("password", { length: 255 }),
+  /**
+   * Password reset token and expiration for password recovery flow
+   */
+  passwordResetToken: varchar("passwordResetToken", { length: 255 }),
+  passwordResetExpires: timestamp("passwordResetExpires"),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

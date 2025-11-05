@@ -260,6 +260,26 @@ class SDKServer {
     // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
+    
+    // Try email/password JWT authentication first
+    if (sessionCookie) {
+      try {
+        const jwt = await import('jsonwebtoken');
+        const decoded = jwt.default.verify(sessionCookie, ENV.jwtSecret) as { userId: number; email: string };
+        
+        if (decoded.userId) {
+          // This is an email/password JWT token
+          const user = await db.getUserById(decoded.userId);
+          if (user) {
+            return user;
+          }
+        }
+      } catch (error) {
+        // Not a JWT token or invalid, try OAuth session
+      }
+    }
+    
+    // Try OAuth session authentication
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {

@@ -41,6 +41,10 @@ async function startServer() {
   // Google OAuth authentication
   setupGoogleAuth(app);
   
+  // Email/password authentication
+  const { default: emailAuthRoutes } = await import('../routes/emailAuthRoutes.js');
+  app.use('/api/auth', emailAuthRoutes);
+  
   // Stripe webhook
   const { default: stripeRoutes } = await import('../routes/stripeRoutes.js');
   app.use('/api/stripe', stripeRoutes);

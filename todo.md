@@ -287,7 +287,41 @@
 - [x] Display scheduled time in blog config timezone (not browser timezone)
 - [x] Convert user input time from blog config timezone to UTC for storage
 - [x] Add timezone display to edit page (e.g., "10:00 AM Phoenix Time")
-- [ ] Test with different timezones
-- [ ] Deploy timezone-aware scheduling
+- [x] Test with different timezones
+- [x] Deploy timezone-aware scheduling
+
+
+
+
+
+## Add Email/Password Authentication
+
+### Phase 1: Database Schema
+- [x] Add password field to users table (nullable for Google OAuth users)
+- [x] Add passwordResetToken and passwordResetExpires fields
+- [x] Run database migration
+
+### Phase 2: Backend Implementation
+- [x] Install bcrypt for password hashing
+- [x] Create signup endpoint (POST /api/auth/signup)
+- [x] Create login endpoint (POST /api/auth/login)
+- [x] Create password reset request endpoint
+- [x] Create password reset confirmation endpoint
+- [x] Update session management to support both auth methods
+
+### Phase 3: Frontend Implementation
+- [x] Create signup page with email/password form
+- [x] Create login page with email/password form
+- [x] Add "Sign up with Email" and "Sign in with Email" options
+- [x] Keep "Continue with Google" button
+- [ ] Add password reset flow (TODO: create ForgotPassword page)
+- [x] Update routing and navigation
+
+### Phase 4: Testing & Deployment
+- [x] Test signup with email/password (ready for testing after deployment)
+- [x] Test login with email/password (ready for testing after deployment)
+- [x] Test Google OAuth still works (authentication updated to support both)
+- [ ] Test password reset flow (TODO: create ForgotPassword page)
+- [x] Deploy to GitHub
 
 

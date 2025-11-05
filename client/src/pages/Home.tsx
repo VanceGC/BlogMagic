@@ -34,7 +34,10 @@ export default function Home() {
               <a href="#how-it-works" className="text-gray-600 hover:text-purple-600 transition-colors">How It Works</a>
               <a href="#pricing" className="text-gray-600 hover:text-purple-600 transition-colors">Pricing</a>
               <Button asChild variant="outline" size="sm">
-                <a href={getLoginUrl()}>Sign In</a>
+                <a href="/login">Sign In</a>
+              </Button>
+              <Button asChild size="sm">
+                <a href="/signup">Sign Up</a>
               </Button>
             </div>
           </div>
