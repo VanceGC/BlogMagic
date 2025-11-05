@@ -264,13 +264,40 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    getCategories: protectedProcedure
+      .input(z.object({
+        blogConfigId: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        // Get blog config to get WordPress credentials
+        const blogConfig = await db.getBlogConfigById(input.blogConfigId, ctx.user.id);
+        if (!blogConfig) {
+          throw new Error("Blog configuration not found");
+        }
+
+        if (!blogConfig.wordpressUrl || !blogConfig.wordpressUsername || !blogConfig.wordpressAppPassword) {
+          throw new Error("WordPress credentials not configured");
+        }
+
+        // Fetch categories from WordPress
+        const { fetchWordPressCategories } = await import("./wordpressPublisher");
+        const categories = await fetchWordPressCategories({
+          url: blogConfig.wordpressUrl,
+          username: blogConfig.wordpressUsername,
+          appPassword: blogConfig.wordpressAppPassword,
+        });
+
+        return categories;
+      }),
+
     update: protectedProcedure
       .input(z.object({
         id: z.number(),
         siteName: z.string().optional(),
-        wordpressUrl: z.string().url().optional(),
+        wordpressUrl: z.string().optional(),
         wordpressUsername: z.string().optional(),
         wordpressAppPassword: z.string().optional(),
+        defaultCategories: z.string().optional(), // JSON string of category IDs
         businessDescription: z.string().optional(),
         competitors: z.string().optional(),
         keywords: z.string().optional(),
@@ -463,6 +490,7 @@ export const appRouter = router({
           keywords: content.keywords.join(", "),
           featuredImageUrl,
           status: "draft",
+          categories: blogConfig.defaultCategories || undefined, // Use blog config's default categories
         });
         
         // Save external sources if any
@@ -501,12 +529,14 @@ export const appRouter = router({
         title: z.string().optional(),
         content: z.string().optional(),
         excerpt: z.string().optional(),
+        categories: z.string().optional(), // JSON string of category IDs
       }))
       .mutation(async ({ ctx, input }) => {
         await db.updatePost(input.id, ctx.user.id, {
           title: input.title,
           content: input.content,
           excerpt: input.excerpt,
+          categories: input.categories,
         });
         return { success: true };
       }),
@@ -644,6 +674,7 @@ export const appRouter = router({
               keywords: post.keywords || undefined,
               featuredImageUrl: post.featuredImageUrl || undefined,
               status: "publish",
+              categories: post.categories ? JSON.parse(post.categories) : undefined,
             }
           );
 

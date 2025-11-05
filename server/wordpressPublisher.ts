@@ -6,6 +6,7 @@ interface WordPressPost {
   excerpt?: string;
   status: 'draft' | 'publish';
   featured_media?: number;
+  categories?: number[]; // Array of WordPress category IDs
   meta?: {
     _yoast_wpseo_title?: string;
     _yoast_wpseo_metadesc?: string;
@@ -117,6 +118,7 @@ export async function publishToWordPress(
     keywords?: string;
     featuredImageUrl?: string;
     status?: 'draft' | 'publish';
+    categories?: number[]; // Array of WordPress category IDs
   }
 ): Promise<string> {
   try {
@@ -147,6 +149,7 @@ export async function publishToWordPress(
       excerpt: post.excerpt,
       status: post.status || 'draft',
       featured_media: featuredMediaId,
+      categories: post.categories && post.categories.length > 0 ? post.categories : undefined,
     };
 
     // Add Yoast SEO meta if SEO data is provided
@@ -201,6 +204,40 @@ export async function updateWordPressPost(
   } catch (error: any) {
     console.error('Failed to update WordPress post:', error.response?.data || error.message);
     throw new Error(`WordPress update failed: ${error.response?.data?.message || error.message}`);
+  }
+}
+
+/**
+ * Fetch WordPress categories
+ */
+export async function fetchWordPressCategories(
+  credentials: WordPressCredentials
+): Promise<Array<{ id: number; name: string; slug: string }>> {
+  try {
+    const auth = Buffer.from(`${credentials.username}:${credentials.appPassword}`).toString('base64');
+    
+    const response = await axios.get(
+      `${credentials.url}/wp-json/wp/v2/categories`,
+      {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+        },
+        params: {
+          per_page: 100, // Get up to 100 categories
+          orderby: 'name',
+          order: 'asc',
+        }
+      }
+    );
+
+    return response.data.map((cat: any) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+    }));
+  } catch (error: any) {
+    console.error('Failed to fetch WordPress categories:', error.response?.data || error.message);
+    throw new Error(`Failed to fetch categories: ${error.response?.data?.message || error.message}`);
   }
 }
 

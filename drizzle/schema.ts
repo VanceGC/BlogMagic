@@ -91,6 +91,7 @@ export const blogConfigs = mysqlTable("blogConfigs", {
   scheduleDayOfWeek: int("scheduleDayOfWeek"),
   timezone: varchar("timezone", { length: 100 }).default("America/New_York"),
   color: varchar("color", { length: 7 }).default("#8B5CF6"),
+  defaultCategories: text("defaultCategories"), // JSON array of WordPress category IDs
   lastScheduledAt: timestamp("lastScheduledAt"),
   isActive: tinyint("isActive").default(1).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -114,6 +115,7 @@ export const posts = mysqlTable("posts", {
   seoTitle: varchar("seoTitle", { length: 500 }),
   seoDescription: text("seoDescription"),
   keywords: text("keywords"),
+  categories: text("categories"), // JSON array of WordPress category IDs
   status: mysqlEnum("status", ["draft", "scheduled", "published", "failed"]).default("draft").notNull(),
   wordpressPostId: varchar("wordpressPostId", { length: 100 }),
   scheduledFor: timestamp("scheduledFor"),

@@ -76,6 +76,22 @@ export default function BlogConfigs() {
   const [scheduleDayOfWeek, setScheduleDayOfWeek] = useState(1); // Monday
   const [timezone, setTimezone] = useState("America/New_York");
   const [color, setColor] = useState("#8B5CF6");
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<Array<{ id: number; name: string; slug: string }>>([]);
+
+  // Category fetching will be triggered when editing a blog config
+  const [categoryBlogConfigId, setCategoryBlogConfigId] = useState<number | null>(null);
+  
+  const { data: categories, isLoading: loadingCategories } = trpc.blogConfigs.getCategories.useQuery(
+    { blogConfigId: categoryBlogConfigId! },
+    { enabled: categoryBlogConfigId !== null }
+  );
+
+  useEffect(() => {
+    if (categories) {
+      setAvailableCategories(categories);
+    }
+  }, [categories]);
 
   const { data: blogConfigs, refetch } = trpc.blogConfigs.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -171,6 +187,14 @@ export default function BlogConfigs() {
     setScheduleDayOfWeek(config.scheduleDayOfWeek || 1);
     setTimezone(config.timezone || "America/New_York");
     setColor(config.color || "#8B5CF6");
+    
+    // Load categories
+    const savedCategories = config.defaultCategories ? JSON.parse(config.defaultCategories) : [];
+    setSelectedCategories(savedCategories);
+    
+    // Trigger category fetch from WordPress
+    setCategoryBlogConfigId(config.id);
+    
     setIsOpen(true);
   };
 
@@ -199,6 +223,7 @@ export default function BlogConfigs() {
       scheduleDayOfWeek: schedulingEnabled && (postingFrequency === "weekly" || postingFrequency === "biweekly") ? scheduleDayOfWeek : undefined,
       timezone,
       color,
+      defaultCategories: selectedCategories.length > 0 ? JSON.stringify(selectedCategories) : undefined,
     };
 
     if (editingId) {
@@ -309,6 +334,46 @@ export default function BlogConfigs() {
                         />
                       </div>
                     </div>
+
+                    {/* WordPress Categories */}
+                    {editingId && (
+                      <div className="space-y-2">
+                        <Label>Default WordPress Categories</Label>
+                        <p className="text-sm text-gray-500 mb-2">
+                          Select categories for scheduled posts (you can override per post)
+                        </p>
+                        {loadingCategories ? (
+                          <div className="text-sm text-gray-500">Loading categories...</div>
+                        ) : availableCategories.length > 0 ? (
+                          <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                            {availableCategories.map((category) => (
+                              <label
+                                key={category.id}
+                                className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedCategories.includes(category.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedCategories([...selectedCategories, category.id]);
+                                    } else {
+                                      setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                                    }
+                                  }}
+                                  className="rounded border-gray-300"
+                                />
+                                <span className="text-sm">{category.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500">
+                            No categories found. Make sure WordPress credentials are correct.
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Content Settings */}

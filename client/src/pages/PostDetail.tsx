@@ -31,6 +31,8 @@ export default function PostDetail() {
   const [regenerateTopic, setRegenerateTopic] = useState("");
   const [scheduledFor, setScheduledFor] = useState<string>("");
   const [showScheduling, setShowScheduling] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<Array<{ id: number; name: string; slug: string }>>([]);
 
   const { data: post, isLoading, refetch } = trpc.posts.getById.useQuery(
     { id: postId! },
@@ -41,6 +43,18 @@ export default function PostDetail() {
     undefined,
     { enabled: isAuthenticated }
   );
+
+  // Fetch categories for the post's blog config
+  const { data: categories, isLoading: loadingCategories } = trpc.blogConfigs.getCategories.useQuery(
+    { blogConfigId: post?.blogConfigId! },
+    { enabled: !!post?.blogConfigId }
+  );
+
+  useEffect(() => {
+    if (categories) {
+      setAvailableCategories(categories);
+    }
+  }, [categories]);
 
   const updatePost = trpc.posts.update.useMutation({
     onSuccess: () => {
@@ -118,6 +132,18 @@ export default function PostDetail() {
       setTitle(post.title || "");
       setContent(post.content || "");
       setExcerpt(post.excerpt || "");
+      
+      // Load categories - use post categories if set, otherwise use blog config defaults
+      if (post.categories) {
+        setSelectedCategories(JSON.parse(post.categories));
+      } else {
+        // Find the blog config and use its default categories
+        const blogConfig = blogConfigs?.find(bc => bc.id === post.blogConfigId);
+        if (blogConfig?.defaultCategories) {
+          setSelectedCategories(JSON.parse(blogConfig.defaultCategories));
+        }
+      }
+      
       if (post.scheduledFor) {
         // Convert to local datetime-local format
         const date = new Date(post.scheduledFor);
@@ -162,6 +188,7 @@ export default function PostDetail() {
       title,
       content,
       excerpt,
+      categories: selectedCategories.length > 0 ? JSON.stringify(selectedCategories) : undefined,
     });
   };
 
@@ -500,6 +527,48 @@ export default function PostDetail() {
                         </option>
                       ))}
                     </select>
+                  </div>
+                )}
+
+                {/* WordPress Categories */}
+                {!post.wordpressPostId && (
+                  <div className="pt-3 border-t">
+                    <Label className="text-gray-600 mb-2 block">WordPress Categories</Label>
+                    <p className="text-xs text-gray-500 mb-2">
+                      Select categories for this post when publishing to WordPress
+                    </p>
+                    {loadingCategories ? (
+                      <div className="text-sm text-gray-500">Loading categories...</div>
+                    ) : availableCategories.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded-md p-3">
+                        {availableCategories.map((category) => (
+                          <label
+                            key={category.id}
+                            className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.includes(category.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category.id]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                                }
+                                // Auto-save categories
+                                setTimeout(() => handleSave(), 500);
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <span className="text-sm">{category.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500">
+                        No categories available. Check blog configuration.
+                      </div>
+                    )}
                   </div>
                 )}
 

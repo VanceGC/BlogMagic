@@ -218,3 +218,19 @@
 - [ ] Test featured image upload end-to-end
 - [ ] Deploy improved image upload
 
+
+
+
+## WordPress Category Selection
+
+- [x] Add fetchWordPressCategories function to wordpressPublisher.ts
+- [x] Update blog_configs table to add defaultCategories column (JSON array of category IDs)
+- [x] Update posts table to add categories column (JSON array of category IDs)
+- [x] Add tRPC endpoint to fetch WordPress categories for a blog config (blogConfigs.getCategories)
+- [x] Add category selection checkboxes to Blog Config form
+- [x] Add category selection checkboxes to Edit Post page (pre-populate with blog config defaults)
+- [x] Update publishToWordPress to send categories array
+- [x] Update generateBlogPost to use blog config's default categories
+- [ ] Test category selection end-to-end
+- [ ] Deploy category selection feature
+
