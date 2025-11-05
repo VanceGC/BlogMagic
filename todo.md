@@ -51,3 +51,10 @@
 - [x] Add API endpoint to serve images from database (/api/images/:id)
 - [x] Update posts to reference image IDs instead of URLs (posts already store URLs as text, now stores /api/images/:id)
 
+
+
+## Database Migration Error Fix
+
+- [x] Change images.data column from binary(16777215) to LONGTEXT
+- [x] MySQL error: "Column length too big for column 'data' (max = 255); use BLOB or TEXT instead"
+

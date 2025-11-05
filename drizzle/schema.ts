@@ -165,7 +165,7 @@ export type InsertSavedTopic = typeof savedTopics.$inferInsert;
  */
 export const images = mysqlTable("images", {
   id: int("id").autoincrement().primaryKey(),
-  data: binary("data", { length: 16777215 }).notNull(), // Binary image data (MEDIUMBLOB)
+  data: text("data").notNull(), // Base64 image data (LONGTEXT)
   mimeType: varchar("mimeType", { length: 50 }).notNull(), // e.g., "image/png", "image/jpeg"
   size: int("size").notNull(), // File size in bytes
   createdAt: timestamp("createdAt").defaultNow().notNull(),
