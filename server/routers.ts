@@ -290,6 +290,22 @@ export const appRouter = router({
         return categories;
       }),
 
+    getCategoriesByCredentials: protectedProcedure
+      .input(z.object({
+        wordpressUrl: z.string(),
+        wordpressUsername: z.string(),
+        wordpressAppPassword: z.string(),
+      }))
+      .query(async ({ input }) => {
+        const { fetchWordPressCategories } = await import("./wordpressPublisher");
+        const categories = await fetchWordPressCategories({
+          url: input.wordpressUrl,
+          username: input.wordpressUsername,
+          appPassword: input.wordpressAppPassword,
+        });
+        return categories;
+      }),
+
     update: protectedProcedure
       .input(z.object({
         id: z.number(),

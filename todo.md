@@ -234,3 +234,13 @@
 - [ ] Test category selection end-to-end
 - [ ] Deploy category selection feature
 
+
+
+
+## Fix Category Selection Bugs
+
+- [x] Fix Edit Post category checkboxes reverting when clicked (added debounced useEffect)
+- [x] Add category selection UI to Blog Config modal (added Fetch Categories button for new configs)
+- [ ] Test category selection in both Edit Post and Blog Config
+- [ ] Deploy category selection bug fixes
+

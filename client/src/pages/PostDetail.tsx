@@ -157,6 +157,17 @@ export default function PostDetail() {
     }
   }, [post]);
 
+  // Auto-save categories when they change (debounced)
+  useEffect(() => {
+    if (!postId || !post) return;
+    
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 1000); // 1 second debounce
+
+    return () => clearTimeout(timer);
+  }, [selectedCategories]);
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -550,13 +561,11 @@ export default function PostDetail() {
                               type="checkbox"
                               checked={selectedCategories.includes(category.id)}
                               onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedCategories([...selectedCategories, category.id]);
-                                } else {
-                                  setSelectedCategories(selectedCategories.filter(id => id !== category.id));
-                                }
-                                // Auto-save categories
-                                setTimeout(() => handleSave(), 500);
+                                const newCategories = e.target.checked
+                                  ? [...selectedCategories, category.id]
+                                  : selectedCategories.filter(id => id !== category.id);
+                                setSelectedCategories(newCategories);
+                                // Debounced save will trigger from useEffect
                               }}
                               className="rounded border-gray-300"
                             />

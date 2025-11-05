@@ -79,13 +79,28 @@ export default function BlogConfigs() {
   const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
   const [availableCategories, setAvailableCategories] = useState<Array<{ id: number; name: string; slug: string }>>([]);
 
-  // Category fetching will be triggered when editing a blog config
+  // Category fetching - use different endpoints for editing vs creating
   const [categoryBlogConfigId, setCategoryBlogConfigId] = useState<number | null>(null);
+  const [fetchCategoriesManually, setFetchCategoriesManually] = useState(false);
   
-  const { data: categories, isLoading: loadingCategories } = trpc.blogConfigs.getCategories.useQuery(
+  // For editing existing blog configs
+  const { data: categoriesFromConfig, isLoading: loadingCategoriesFromConfig } = trpc.blogConfigs.getCategories.useQuery(
     { blogConfigId: categoryBlogConfigId! },
     { enabled: categoryBlogConfigId !== null }
   );
+  
+  // For creating new blog configs (fetch by credentials)
+  const { data: categoriesFromCredentials, isLoading: loadingCategoriesFromCredentials } = trpc.blogConfigs.getCategoriesByCredentials.useQuery(
+    {
+      wordpressUrl,
+      wordpressUsername,
+      wordpressAppPassword,
+    },
+    { enabled: fetchCategoriesManually && !editingId && !!wordpressUrl && !!wordpressUsername && !!wordpressAppPassword }
+  );
+  
+  const categories = editingId ? categoriesFromConfig : categoriesFromCredentials;
+  const loadingCategories = editingId ? loadingCategoriesFromConfig : loadingCategoriesFromCredentials;
 
   useEffect(() => {
     if (categories) {
@@ -166,6 +181,10 @@ export default function BlogConfigs() {
     setTimezone("America/New_York");
     setColor("#8B5CF6");
     setEditingId(null);
+    setSelectedCategories([]);
+    setAvailableCategories([]);
+    setFetchCategoriesManually(false);
+    setCategoryBlogConfigId(null);
   };
 
   const loadConfigForEdit = (config: any) => {
@@ -336,12 +355,27 @@ export default function BlogConfigs() {
                     </div>
 
                     {/* WordPress Categories */}
-                    {editingId && (
+                    {(editingId || (wordpressUrl && wordpressUsername && wordpressAppPassword)) && (
                       <div className="space-y-2">
-                        <Label>Default WordPress Categories</Label>
-                        <p className="text-sm text-gray-500 mb-2">
-                          Select categories for scheduled posts (you can override per post)
-                        </p>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label>Default WordPress Categories</Label>
+                            <p className="text-sm text-gray-500 mb-2">
+                              Select categories for scheduled posts (you can override per post)
+                            </p>
+                          </div>
+                          {!editingId && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setFetchCategoriesManually(true)}
+                              disabled={loadingCategories || !wordpressUrl || !wordpressUsername || !wordpressAppPassword}
+                            >
+                              {loadingCategories ? "Loading..." : "Fetch Categories"}
+                            </Button>
+                          )}
+                        </div>
                         {loadingCategories ? (
                           <div className="text-sm text-gray-500">Loading categories...</div>
                         ) : availableCategories.length > 0 ? (
