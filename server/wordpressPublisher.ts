@@ -71,7 +71,9 @@ export async function uploadImageToWordPress(
     // Upload to WordPress
     const auth = Buffer.from(`${credentials.username}:${credentials.appPassword}`).toString('base64');
     const extension = contentType.includes('png') ? 'png' : 'jpg';
-    const filename = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.${extension}`;
+    const timestamp = Date.now();
+    const sanitizedTitle = title.replace(/[^a-z0-9]/gi, '-').toLowerCase().substring(0, 50); // Limit to 50 chars
+    const filename = `${sanitizedTitle}-${timestamp}.${extension}`;
     
     console.log(`[WordPress Publisher] Uploading to WordPress as: ${filename}`);
     
@@ -123,10 +125,18 @@ export async function publishToWordPress(
     // Upload featured image if provided
     let featuredMediaId: number | undefined;
     if (post.featuredImageUrl) {
+      console.log('[WordPress Publisher] Uploading featured image before creating post...');
       try {
         featuredMediaId = await uploadImageToWordPress(credentials, post.featuredImageUrl, post.title);
-      } catch (error) {
-        console.error('Failed to upload featured image, continuing without it:', error);
+        console.log(`[WordPress Publisher] Featured image uploaded successfully, media ID: ${featuredMediaId}`);
+      } catch (error: any) {
+        console.error('[WordPress Publisher] CRITICAL: Failed to upload featured image:', {
+          error: error.message,
+          imageUrl: post.featuredImageUrl,
+          stack: error.stack,
+        });
+        // Continue without image but log prominently
+        console.warn('[WordPress Publisher] Continuing to create post WITHOUT featured image');
       }
     }
 

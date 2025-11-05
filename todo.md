@@ -206,3 +206,15 @@
 - [ ] Test deleting blog config and verifying posts become orphaned
 - [ ] Deploy orphaned post handling
 
+
+
+
+## WordPress Featured Image Upload - Unique Filenames
+
+- [x] Review current uploadImageToWordPress implementation (already uploads before post creation)
+- [x] Generate unique filename using post title + timestamp (sanitized-title-1699123456789.jpg)
+- [x] Ensure image uploads to media library BEFORE post creation (already implemented line 125-131)
+- [x] Add comprehensive error logging for debugging (added detailed console logs)
+- [ ] Test featured image upload end-to-end
+- [ ] Deploy improved image upload
+
