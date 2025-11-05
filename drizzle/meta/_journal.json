@@ -57,6 +57,13 @@
       "when": 1762345617310,
       "tag": "0007_hard_triton",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1762348646800,
+      "tag": "0008_broken_brood",
+      "breakpoints": true
     }
   ]
 }

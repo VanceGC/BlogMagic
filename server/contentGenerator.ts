@@ -1,6 +1,9 @@
 import { invokeLLM } from "./_core/llm";
 import { generateImage } from "./_core/imageGeneration";
 import { BlogConfig } from "../drizzle/schema";
+import { performSEOOptimization } from "./lib/seoOptimizer";
+import { getRelevantInternalLinks } from "./lib/wordpressScraper";
+import { researchTopic, generateCitations, formatReferenceList, saveExternalSources } from "./lib/webResearch";
 
 interface GeneratedContent {
   title: string;
@@ -10,12 +13,19 @@ interface GeneratedContent {
   seoDescription: string;
   keywords: string[];
   featuredImagePrompt: string;
+  seoScore?: number;
+  internalLinks?: Array<{ url: string; title: string; excerpt: string }>;
+  externalSources?: Array<{ url: string; title: string; domain: string }>;
 }
 
 interface ContentGenerationParams {
   blogConfig: BlogConfig;
   userId: number;
   topic?: string;
+  enableSEO?: boolean; // Enable SEO optimization pass
+  enableResearch?: boolean; // Enable web research for citations
+  enableInternalLinks?: boolean; // Enable internal link suggestions
+  postId?: number; // For saving external sources
 }
 
 /**
@@ -120,7 +130,116 @@ export async function generateBlogPost(params: ContentGenerationParams): Promise
     throw new Error("Failed to generate content");
   }
 
-  return JSON.parse(content);
+  let generatedContent: GeneratedContent = JSON.parse(content);
+  
+  // Step 2: Web Research (if enabled)
+  let externalSources: Array<{ url: string; title: string; domain: string; snippet: string; relevance: number }> = [];
+  if (params.enableResearch) {
+    console.log('[Content Generator] Performing web research for external citations...');
+    try {
+      // Create a simple outline from the content for research
+      const outline = `${generatedContent.title}\n\n${generatedContent.excerpt}`;
+      externalSources = await researchTopic(
+        generatedContent.title,
+        outline,
+        llmKey.apiKey,
+        llmKey.provider
+      );
+      
+      if (externalSources.length > 0) {
+        console.log(`[Content Generator] Found ${externalSources.length} external sources`);
+        
+        // Generate citations and add to content
+        const citations = await generateCitations(externalSources, llmKey.apiKey, llmKey.provider);
+        if (citations.length > 0) {
+          // Insert citations naturally into content
+          generatedContent.content += '\n\n' + citations.join('\n\n');
+        }
+        
+        // Add reference list at the end
+        const referenceList = formatReferenceList(externalSources);
+        generatedContent.content += referenceList;
+        
+        // Save external sources to database if postId provided
+        if (params.postId) {
+          await saveExternalSources(params.postId, externalSources);
+        }
+      }
+    } catch (error) {
+      console.error('[Content Generator] Web research failed:', error);
+      // Continue without research if it fails
+    }
+  }
+  
+  // Step 3: Internal Link Suggestions (if enabled)
+  let internalLinks: Array<{ url: string; title: string; excerpt: string }> = [];
+  if (params.enableInternalLinks && blogConfig.id) {
+    console.log('[Content Generator] Finding relevant internal links...');
+    try {
+      internalLinks = await getRelevantInternalLinks(
+        blogConfig.id,
+        generatedContent.title + ' ' + generatedContent.keywords.join(' '),
+        5
+      );
+      
+      if (internalLinks.length > 0) {
+        console.log(`[Content Generator] Found ${internalLinks.length} relevant internal links`);
+        
+        // Add internal links section to content
+        const linksSection = '\n\n## Related Articles\n\n' + 
+          internalLinks.map(link => `- [${link.title}](${link.url})`).join('\n');
+        generatedContent.content += linksSection;
+      }
+    } catch (error) {
+      console.error('[Content Generator] Internal link suggestions failed:', error);
+      // Continue without internal links if it fails
+    }
+  }
+  
+  // Step 4: SEO Optimization (if enabled)
+  if (params.enableSEO) {
+    console.log('[Content Generator] Performing SEO optimization...');
+    try {
+      const primaryKeyword = generatedContent.keywords[0];
+      const { optimized, analysis } = await performSEOOptimization(
+        generatedContent.title,
+        generatedContent.content,
+        generatedContent.excerpt,
+        primaryKeyword,
+        70, // Threshold score
+        llmKey.apiKey,
+        llmKey.provider
+      );
+      
+      console.log(`[Content Generator] SEO optimization complete - Score: ${analysis.score}/100`);
+      
+      // Apply optimized content
+      generatedContent.title = optimized.title;
+      generatedContent.content = optimized.content;
+      generatedContent.excerpt = optimized.excerpt;
+      generatedContent.seoDescription = optimized.metaDescription;
+      generatedContent.seoScore = analysis.score;
+      
+      console.log(`[Content Generator] Improvements: ${optimized.improvements.join(', ')}`);
+    } catch (error) {
+      console.error('[Content Generator] SEO optimization failed:', error);
+      // Continue with original content if optimization fails
+    }
+  }
+  
+  // Add metadata to result
+  if (internalLinks.length > 0) {
+    generatedContent.internalLinks = internalLinks;
+  }
+  if (externalSources.length > 0) {
+    generatedContent.externalSources = externalSources.map(s => ({
+      url: s.url,
+      title: s.title,
+      domain: s.domain,
+    }));
+  }
+
+  return generatedContent;
 }
 
 /**

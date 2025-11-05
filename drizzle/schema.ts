@@ -173,3 +173,37 @@ export const images = mysqlTable("images", {
 
 export type Image = typeof images.$inferSelect;
 export type InsertImage = typeof images.$inferInsert;
+
+/**
+ * Site pages table for storing scraped WordPress pages/posts
+ * Used for intelligent internal linking suggestions
+ */
+export const sitePages = mysqlTable("site_pages", {
+  id: int("id").autoincrement().primaryKey(),
+  blogConfigId: int("blogConfigId").notNull(),
+  url: text("url").notNull(),
+  title: text("title").notNull(),
+  excerpt: text("excerpt"),
+  content: text("content"),
+  keywords: text("keywords"), // Comma-separated keywords extracted from content
+  scrapedAt: timestamp("scrapedAt").defaultNow().notNull(),
+});
+
+export type SitePage = typeof sitePages.$inferSelect;
+export type InsertSitePage = typeof sitePages.$inferInsert;
+
+/**
+ * External sources table for tracking citations and research sources
+ * Used for SEO and credibility tracking
+ */
+export const externalSources = mysqlTable("external_sources", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull(),
+  url: text("url").notNull(),
+  title: text("title"),
+  domain: varchar("domain", { length: 255 }),
+  citedAt: timestamp("citedAt").defaultNow().notNull(),
+});
+
+export type ExternalSource = typeof externalSources.$inferSelect;
+export type InsertExternalSource = typeof externalSources.$inferInsert;

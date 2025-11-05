@@ -326,6 +326,52 @@ export const appRouter = router({
       }),
   }),
 
+  seo: router({
+    scrapeSite: protectedProcedure
+      .input(z.object({ blogConfigId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const blogConfig = await db.getBlogConfigById(input.blogConfigId, ctx.user.id);
+        if (!blogConfig) {
+          throw new Error("Blog configuration not found");
+        }
+        
+        const { scrapeWordPressSite } = await import("./lib/wordpressScraper");
+        const pagesScraped = await scrapeWordPressSite(blogConfig.id, blogConfig.wordpressUrl);
+        
+        return { success: true, pagesScraped };
+      }),
+    
+    getSitePages: protectedProcedure
+      .input(z.object({ blogConfigId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const blogConfig = await db.getBlogConfigById(input.blogConfigId, ctx.user.id);
+        if (!blogConfig) {
+          throw new Error("Blog configuration not found");
+        }
+        
+        const pages = await db.getSitePagesByBlogConfigId(blogConfig.id);
+        return pages;
+      }),
+    
+    analyzeSEO: protectedProcedure
+      .input(z.object({
+        title: z.string(),
+        content: z.string(),
+        excerpt: z.string(),
+        targetKeyword: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { analyzeSEO } = await import("./lib/seoOptimizer");
+        const analysis = await analyzeSEO(
+          input.title,
+          input.content,
+          input.excerpt,
+          input.targetKeyword
+        );
+        return analysis;
+      }),
+  }),
+
   posts: router({
     list: protectedProcedure
       .input(z.object({ 
@@ -345,6 +391,9 @@ export const appRouter = router({
         blogConfigId: z.number(),
         topic: z.string().optional(),
         generateImage: z.boolean().default(true),
+        enableSEO: z.boolean().default(true),
+        enableResearch: z.boolean().default(false),
+        enableInternalLinks: z.boolean().default(true),
       }))
       .mutation(async ({ ctx, input }) => {
         // Get blog config
@@ -360,11 +409,14 @@ export const appRouter = router({
           topic = await selectNextTopic(blogConfig, ctx.user.id);
         }
 
-        // Generate content
+        // Generate content with SEO features
         const content = await generateBlogPost({
           blogConfig,
           userId: ctx.user.id,
           topic,
+          enableSEO: input.enableSEO,
+          enableResearch: input.enableResearch,
+          enableInternalLinks: input.enableInternalLinks,
         });
 
         // Generate featured image if requested
@@ -378,7 +430,7 @@ export const appRouter = router({
         }
 
         // Save post to database
-        await db.createPost({
+        const result = await db.createPost({
           blogConfigId: input.blogConfigId,
           userId: ctx.user.id,
           title: content.title,
@@ -390,6 +442,22 @@ export const appRouter = router({
           featuredImageUrl,
           status: "draft",
         });
+        
+        // Save external sources if any
+        if (content.externalSources && content.externalSources.length > 0) {
+          const postId = (result as any)[0]?.insertId || (result as any).insertId;
+          if (postId) {
+            for (const source of content.externalSources) {
+              await db.createExternalSource({
+                postId: Number(postId),
+                url: source.url,
+                title: source.title,
+                domain: source.domain,
+                citedAt: new Date(),
+              });
+            }
+          }
+        }
 
         return { success: true, content };
       }),

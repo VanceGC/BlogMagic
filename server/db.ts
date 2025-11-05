@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem, savedTopics, InsertSavedTopic, images, InsertImage } from "../drizzle/schema";
+import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem, savedTopics, InsertSavedTopic, images, InsertImage, sitePages, InsertSitePage, externalSources, InsertExternalSource } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -342,3 +342,49 @@ export async function getImageById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// Site Pages (for internal linking)
+export async function getSitePagesByBlogConfigId(blogConfigId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(sitePages).where(eq(sitePages.blogConfigId, blogConfigId));
+}
+
+export async function getSitePageById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(sitePages).where(eq(sitePages.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createSitePage(data: InsertSitePage) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(sitePages).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteSitePagesByBlogConfigId(blogConfigId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(sitePages).where(eq(sitePages.blogConfigId, blogConfigId));
+}
+
+// External Sources (for citations)
+export async function getExternalSourcesByPostId(postId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(externalSources).where(eq(externalSources.postId, postId));
+}
+
+export async function createExternalSource(data: InsertExternalSource) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(externalSources).values(data);
+  return result[0].insertId;
+}
+
+export async function deleteExternalSourcesByPostId(postId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(externalSources).where(eq(externalSources.postId, postId));
+}

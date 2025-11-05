@@ -76,3 +76,34 @@
 - [x] Add explicit instructions to prevent text/captions in generated images (negative prompt)
 - [x] Default to OpenAI if both API keys are available (implemented in getPreferredLLMKey)
 
+
+
+## Comprehensive SEO Optimization System
+
+### Phase 1: Site Scraping & Internal Link Database
+- [x] Create `site_pages` table (id, blogConfigId, url, title, excerpt, content, keywords, scrapedAt)
+- [x] Implement WordPress site scraper function
+- [ ] Trigger scraping when blog config is created/updated
+- [x] Store page metadata for internal linking suggestions
+
+### Phase 2: Web Research & External Citations
+- [x] Integrate search tool to research topics during content generation
+- [x] Create `external_sources` table (id, postId, url, title, domain, citedAt)
+- [x] Have AI identify research needs and query web
+- [x] Extract and store authoritative sources
+- [x] Add citations naturally within content
+
+### Phase 3: AI-Powered SEO Review
+- [x] Implement SEO analysis function (keyword density, readability, structure)
+- [x] Add AI review pass after initial draft
+- [x] Check: keyword optimization, Flesch reading ease, meta description
+- [x] Verify: header hierarchy (H2/H3), internal/external link balance
+- [x] AI suggests improvements and regenerates if needed
+
+### Phase 4: Integration
+- [x] Update generateBlogPost to include research step
+- [x] Add internal link suggestions based on scraped site data
+- [x] Insert external citations from research
+- [x] Run SEO optimization pass before finalizing
+- [x] Log SEO scores for tracking improvements
+
