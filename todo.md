@@ -244,3 +244,13 @@
 - [ ] Test category selection in both Edit Post and Blog Config
 - [ ] Deploy category selection bug fixes
 
+
+
+
+## Fix Category Selection Infinite Loop
+
+- [x] Remove auto-save useEffect that triggers on selectedCategories change
+- [x] Ensure categories only save when user clicks "Save Changes" button (handleSave already includes categories)
+- [ ] Test that category selection works without infinite loop
+- [ ] Deploy the fix
+

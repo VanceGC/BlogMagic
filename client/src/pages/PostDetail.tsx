@@ -157,17 +157,6 @@ export default function PostDetail() {
     }
   }, [post]);
 
-  // Auto-save categories when they change (debounced)
-  useEffect(() => {
-    if (!postId || !post) return;
-    
-    const timer = setTimeout(() => {
-      handleSave();
-    }, 1000); // 1 second debounce
-
-    return () => clearTimeout(timer);
-  }, [selectedCategories]);
-
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
