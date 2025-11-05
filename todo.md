@@ -193,3 +193,16 @@
 - [ ] Test reassigning posts to different WordPress sites
 - [ ] Deploy feature to production
 
+
+
+
+## Orphaned Post Detection & Handling
+
+- [x] Modify posts.list to check if blogConfigId exists (join with blogConfigs table)
+- [x] Add isOrphaned flag to post data when blog config is deleted
+- [x] Update Posts page UI to show "Unassigned" badge for orphaned posts
+- [x] Show warning message with reassignment dropdown for orphaned posts
+- [x] Prevent publishing/scheduling orphaned posts until reassigned (already implemented in line 621-624)
+- [ ] Test deleting blog config and verifying posts become orphaned
+- [ ] Deploy orphaned post handling
+

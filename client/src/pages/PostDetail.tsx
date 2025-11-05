@@ -460,14 +460,32 @@ export default function PostDetail() {
                     <span>{post.wordpressPostId}</span>
                   </div>
                 )}
-                {!post.wordpressPostId && blogConfigs && blogConfigs.length > 1 && (
+                {!post.wordpressPostId && blogConfigs && blogConfigs.length > 0 && (
                   <div className="pt-3 border-t">
-                    <Label htmlFor="blogConfig" className="text-gray-600 mb-2 block">
-                      Blog Configuration
-                    </Label>
-                    <p className="text-xs text-gray-500 mb-2">
-                      Change which WordPress site this post will be published to
-                    </p>
+                    {(post as any).isOrphaned ? (
+                      <>
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          <Label htmlFor="blogConfig" className="text-orange-700 font-semibold">
+                            Blog Configuration Deleted
+                          </Label>
+                        </div>
+                        <p className="text-sm text-orange-600 mb-3">
+                          The blog configuration for this post was deleted. Please reassign to a different blog or delete this post.
+                        </p>
+                      </>
+                    ) : blogConfigs.length > 1 ? (
+                      <>
+                        <Label htmlFor="blogConfig" className="text-gray-600 mb-2 block">
+                          Blog Configuration
+                        </Label>
+                        <p className="text-xs text-gray-500 mb-2">
+                          Change which WordPress site this post will be published to
+                        </p>
+                      </>
+                    ) : null}
                     <select
                       id="blogConfig"
                       value={post.blogConfigId}
@@ -475,6 +493,7 @@ export default function PostDetail() {
                       className="w-full px-3 py-2 border rounded-md text-sm"
                       disabled={changeBlogConfig.isPending}
                     >
+                      {(post as any).isOrphaned && <option value="" disabled>Select a blog configuration</option>}
                       {blogConfigs.map((config) => (
                         <option key={config.id} value={config.id}>
                           {config.siteName}

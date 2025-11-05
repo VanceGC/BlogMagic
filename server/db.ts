@@ -253,7 +253,19 @@ export async function getPostById(id: number, userId: number) {
 export async function getPostsByUserId(userId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(posts).where(eq(posts.userId, userId)).limit(limit);
+  
+  // Get all posts for the user
+  const userPosts = await db.select().from(posts).where(eq(posts.userId, userId)).limit(limit);
+  
+  // Get all blog configs for the user to check if posts are orphaned
+  const userBlogConfigs = await db.select().from(blogConfigs).where(eq(blogConfigs.userId, userId));
+  const validBlogConfigIds = new Set(userBlogConfigs.map(config => config.id));
+  
+  // Add isOrphaned flag to each post
+  return userPosts.map(post => ({
+    ...post,
+    isOrphaned: !validBlogConfigIds.has(post.blogConfigId),
+  }));
 }
 
 export async function createPost(data: InsertPost) {
