@@ -37,6 +37,11 @@ export default function PostDetail() {
     { enabled: !!postId && isAuthenticated }
   );
 
+  const { data: blogConfigs } = trpc.blogConfigs.list.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+
   const updatePost = trpc.posts.update.useMutation({
     onSuccess: () => {
       toast.success("Post updated successfully");
@@ -89,6 +94,16 @@ export default function PostDetail() {
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update schedule");
+    },
+  });
+
+  const changeBlogConfig = trpc.posts.changeBlogConfig.useMutation({
+    onSuccess: () => {
+      toast.success("Blog configuration updated!");
+      refetch();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update blog configuration");
     },
   });
 
@@ -179,6 +194,15 @@ export default function PostDetail() {
       postId,
       scheduledFor: utcDate.toISOString(),
       status: "scheduled",
+    });
+  };
+
+  const handleChangeBlogConfig = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!postId) return;
+    const newBlogConfigId = parseInt(e.target.value);
+    changeBlogConfig.mutate({
+      postId,
+      newBlogConfigId,
     });
   };
 
@@ -434,6 +458,29 @@ export default function PostDetail() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">WordPress Post ID:</span>
                     <span>{post.wordpressPostId}</span>
+                  </div>
+                )}
+                {!post.wordpressPostId && blogConfigs && blogConfigs.length > 1 && (
+                  <div className="pt-3 border-t">
+                    <Label htmlFor="blogConfig" className="text-gray-600 mb-2 block">
+                      Blog Configuration
+                    </Label>
+                    <p className="text-xs text-gray-500 mb-2">
+                      Change which WordPress site this post will be published to
+                    </p>
+                    <select
+                      id="blogConfig"
+                      value={post.blogConfigId}
+                      onChange={handleChangeBlogConfig}
+                      className="w-full px-3 py-2 border rounded-md text-sm"
+                      disabled={changeBlogConfig.isPending}
+                    >
+                      {blogConfigs.map((config) => (
+                        <option key={config.id} value={config.id}>
+                          {config.siteName}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 

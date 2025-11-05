@@ -200,6 +200,24 @@ export const appRouter = router({
         return await db.getBlogConfigById(input.id, ctx.user.id);
       }),
 
+    // Debug endpoint to check credentials
+    debugCredentials: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const config = await db.getBlogConfigById(input.id, ctx.user.id);
+        if (!config) {
+          throw new Error("Blog configuration not found");
+        }
+        return {
+          siteName: config.siteName,
+          wordpressUrl: config.wordpressUrl,
+          hasUsername: !!config.wordpressUsername,
+          hasAppPassword: !!config.wordpressAppPassword,
+          usernameValue: config.wordpressUsername || "(empty)",
+          appPasswordLength: config.wordpressAppPassword?.length || 0,
+        };
+      }),
+
     create: protectedProcedure
       .input(z.object({
         siteName: z.string(),
@@ -646,6 +664,26 @@ export const appRouter = router({
 
           throw error;
         }
+      }),
+
+    changeBlogConfig: protectedProcedure
+      .input(z.object({
+        postId: z.number(),
+        newBlogConfigId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify the new blog config exists and belongs to the user
+        const newBlogConfig = await db.getBlogConfigById(input.newBlogConfigId, ctx.user.id);
+        if (!newBlogConfig) {
+          throw new Error("Blog configuration not found");
+        }
+
+        // Update the post's blog config
+        await db.updatePost(input.postId, ctx.user.id, {
+          blogConfigId: input.newBlogConfigId,
+        });
+
+        return { success: true };
       }),
 
     delete: protectedProcedure

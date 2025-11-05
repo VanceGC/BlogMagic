@@ -167,3 +167,29 @@
 - [ ] Test end-to-end featured image upload
 - [ ] Deploy foolproof solution
 
+
+
+
+## Fix WordPress Credentials Not Configured Error
+
+- [ ] Check how blog config credentials are saved to database
+- [ ] Verify credentials are being retrieved correctly when publishing
+- [ ] Check if webhook URL is interfering with credential storage
+- [ ] Test credential retrieval for Alpha Mind Male blog
+- [ ] Fix any issues with credential storage/retrieval
+- [ ] Test publishing to WordPress after fix
+- [ ] Deploy fix to production
+
+
+
+
+## Allow Changing Post Blog Config Assignment
+
+- [x] Verify posts currently fetch credentials fresh from database (not cached) ✅
+- [x] Add UI to change which blog config a post is assigned to (dropdown in Post Information)
+- [x] Add tRPC endpoint to update post's blogConfigId (posts.changeBlogConfig)
+- [x] Ensure changing blog config doesn't break scheduled posts (verified - only blogConfigId changes)
+- [x] Credentials are always fetched fresh (verified in publish procedure line 603)
+- [ ] Test reassigning posts to different WordPress sites
+- [ ] Deploy feature to production
+
