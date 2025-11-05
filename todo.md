@@ -83,7 +83,7 @@
 ### Phase 1: Site Scraping & Internal Link Database
 - [x] Create `site_pages` table (id, blogConfigId, url, title, excerpt, content, keywords, scrapedAt)
 - [x] Implement WordPress site scraper function
-- [ ] Trigger scraping when blog config is created/updated
+- [x] Trigger scraping when blog config is created/updated
 - [x] Store page metadata for internal linking suggestions
 
 ### Phase 2: Web Research & External Citations
