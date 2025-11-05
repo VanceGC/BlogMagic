@@ -346,8 +346,21 @@
 - [x] Review Google OAuth callback handler in googleAuth.ts
 - [x] Found root cause: Database missing password columns
 - [x] Create SQL migration script to add password columns
-- [ ] Run migration on production database
+- [ ] Run migration on production database (user needs to do this)
 - [ ] Test Google OAuth login after migration
-- [ ] Deploy migration script to GitHub
+- [x] Deploy migration script to GitHub
+
+
+
+
+
+## Fix Trending Topics Generation
+
+- [x] Investigate trending topics generation backend code
+- [x] Check if topics are being saved to database
+- [x] Found issue: Generated topics stored in local state, lost on page refresh
+- [x] Auto-save generated topics to database after generation
+- [ ] Test trending topics generation and persistence
+- [ ] Deploy fix to GitHub
 
 

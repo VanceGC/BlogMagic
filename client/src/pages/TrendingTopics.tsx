@@ -34,10 +34,31 @@ export default function TrendingTopics() {
   const utils = trpc.useUtils();
 
   const generateTrendingMutation = trpc.trending.getSuggestions.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success("Trending topics generated! 10 credits deducted.");
       setGeneratedTopics(data);
       utils.subscription.get.invalidate();
+      
+      // Auto-save all generated topics to database
+      if (data && data.length > 0 && selectedBlogConfigId) {
+        for (const topic of data) {
+          try {
+            await saveTopicMutation.mutateAsync({
+              blogConfigId: selectedBlogConfigId,
+              title: topic.title,
+              reason: topic.reason,
+              searchVolume: topic.searchVolume as "high" | "medium" | "low",
+              keywords: topic.keywords,
+              source: topic.source,
+            });
+          } catch (error) {
+            console.error("Failed to auto-save topic:", error);
+          }
+        }
+        // Refresh saved topics list
+        refetchSaved();
+        toast.success(`${data.length} topics saved to your library!`);
+      }
     },
     onError: (error) => {
       toast.error(`Failed to generate topics: ${error.message}`);
