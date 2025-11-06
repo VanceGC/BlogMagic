@@ -12,6 +12,22 @@ interface TrendingTopic {
 }
 
 /**
+ * Normalize searchVolume to match database enum: "high", "medium", or "low"
+ */
+function normalizeSearchVolume(value: string): "high" | "medium" | "low" {
+  const normalized = value.toLowerCase().trim();
+  
+  // Handle variations
+  if (normalized.includes("high")) return "high";
+  if (normalized.includes("medium")) return "medium";
+  if (normalized.includes("low")) return "low";
+  
+  // Default to medium if unrecognized
+  console.warn(`[TrendingTopics] Unknown searchVolume value: "${value}", defaulting to "medium"`);
+  return "medium";
+}
+
+/**
  * Discover trending topics based on blog config using Perplexity web search
  */
 export async function discoverTrendingTopics(
@@ -77,7 +93,7 @@ ${trendingContent}
 For each topic, provide:
 1. A compelling, SEO-friendly blog post title
 2. Why this topic is trending and has viral potential
-3. Estimated search volume (high/medium/low)
+3. Estimated search volume - MUST be EXACTLY one of these three values: "high", "medium", or "low" (lowercase, no other variations)
 4. Primary keywords for this topic
 5. Which trending source inspired this topic
 
@@ -125,7 +141,8 @@ Focus on topics that:
                   },
                   searchVolume: {
                     type: "string",
-                    description: "Estimated search interest (high/medium/low)",
+                    description: "Estimated search interest - MUST be exactly one of: high, medium, or low (lowercase only)",
+                    enum: ["high", "medium", "low"],
                   },
                   keywords: {
                     type: "array",
@@ -156,7 +173,14 @@ Focus on topics that:
   const result = JSON.parse(contentString || "{}");
   const topics = result.topics || [];
   console.log('[TrendingTopics] Generated', topics.length, 'topics from AI');
-  return topics;
+  
+  // Normalize searchVolume values to ensure they match database enum
+  const normalizedTopics = topics.map((topic: TrendingTopic) => ({
+    ...topic,
+    searchVolume: normalizeSearchVolume(topic.searchVolume)
+  }));
+  
+  return normalizedTopics;
 }
 
 /**

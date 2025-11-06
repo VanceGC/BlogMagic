@@ -455,5 +455,17 @@
 - [x] Verify saved topics are being added to the list
 - [x] Check for console errors when clicking Save Topic
 - [x] Fix the issue - added onSuccess/onError callbacks to handleSaveTopic
+- [x] Deploy fix to GitHub
+
+
+
+
+## Fix searchVolume Validation Error
+
+- [x] Check database schema for searchVolume enum values (high, medium, low)
+- [x] Check AI prompt that generates topics - ensure it only returns "high", "medium", or "low"
+- [x] Added enum constraint to JSON schema for AI response
+- [x] Added normalizeSearchVolume function to handle variations (MEDIUM-HIGH → medium)
+- [x] Applied normalization before returning topics
 - [ ] Deploy fix to GitHub
 
