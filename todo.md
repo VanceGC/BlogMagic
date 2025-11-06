@@ -467,5 +467,15 @@
 - [x] Added enum constraint to JSON schema for AI response
 - [x] Added normalizeSearchVolume function to handle variations (MEDIUM-HIGH → medium)
 - [x] Applied normalization before returning topics
+- [x] Deploy fix to GitHub
+
+
+
+
+## Remove Auto-Save for Trending Topics
+
+- [x] Remove auto-save logic from generateTrendingMutation onSuccess
+- [x] Keep only manual save via "Save Topic" button
+- [x] Updated success message to guide users to click Save Topic
 - [ ] Deploy fix to GitHub
 

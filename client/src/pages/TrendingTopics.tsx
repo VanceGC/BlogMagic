@@ -47,34 +47,9 @@ export default function TrendingTopics() {
     onSuccess: (data) => {
       console.log('[Frontend] Received trending topics:', data);
       console.log('[Frontend] Number of topics:', data?.length);
-      toast.success("Trending topics generated! 10 credits deducted.");
+      toast.success(`${data.length} trending topics generated! 10 credits deducted. Click 'Save Topic' to add them to your library.`);
       setGeneratedTopics(data);
       utils.subscription.get.invalidate();
-      
-      // Auto-save all generated topics to database
-      if (data && data.length > 0 && selectedBlogConfigId) {
-        // Save each topic sequentially
-        data.forEach((topic, index) => {
-          setTimeout(() => {
-            saveTopicMutation.mutate({
-              blogConfigId: selectedBlogConfigId,
-              title: topic.title,
-              reason: topic.reason,
-              searchVolume: topic.searchVolume as "high" | "medium" | "low",
-              keywords: topic.keywords,
-              source: topic.source,
-            });
-            
-            // Show success message after last topic
-            if (index === data.length - 1) {
-              setTimeout(() => {
-                refetchSaved();
-                toast.success(`${data.length} topics saved to your library!`);
-              }, 500);
-            }
-          }, index * 200); // Stagger saves by 200ms
-        });
-      }
     },
     onError: (error) => {
       toast.error(`Failed to generate topics: ${error.message}`);
