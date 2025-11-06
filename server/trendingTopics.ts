@@ -16,7 +16,7 @@ interface TrendingTopic {
  */
 export async function discoverTrendingTopics(
   blogConfig: BlogConfig,
-  userId?: number
+  userId: number
 ): Promise<TrendingTopic[]> {
   console.log('[TrendingTopics] Starting discoverTrendingTopics for:', blogConfig.siteName);
   const keywords = blogConfig.keywords || "";
@@ -56,10 +56,6 @@ export async function discoverTrendingTopics(
   console.log('[TrendingTopics] Got trending content from Perplexity');
 
   // Get user's API key
-  if (!userId) {
-    throw new Error("User ID is required for trending topics generation");
-  }
-  
   const llmKey = await getPreferredLLMKey(userId);
   if (!llmKey) {
     throw new Error("No LLM API key configured. Please add an OpenAI or Anthropic API key in Settings.");
@@ -167,8 +163,9 @@ Focus on topics that:
  * Select a trending topic for the next blog post
  */
 export async function getTrendingSuggestions(
-  blogConfig: BlogConfig
+  blogConfig: BlogConfig,
+  userId: number
 ): Promise<TrendingTopic[]> {
-  return await discoverTrendingTopics(blogConfig);
+  return await discoverTrendingTopics(blogConfig, userId);
 }
 

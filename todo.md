@@ -434,3 +434,14 @@
 - [ ] Deploy fix to GitHub
 
 
+
+
+
+## Fix userId Not Passed to Trending Topics
+
+- [x] Check router endpoint that calls discoverTrendingTopics
+- [x] Pass ctx.user.id to discoverTrendingTopics function
+- [x] Made userId required parameter in discoverTrendingTopics
+- [x] Updated getTrendingSuggestions to accept and pass userId
+- [x] Deploy fix to GitHub
+
