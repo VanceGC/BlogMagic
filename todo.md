@@ -430,7 +430,17 @@
 - [x] Update trendingTopics.ts to use user's API key from apiKeys table
 - [x] Use getPreferredLLMKey to fetch user's OpenAI or Anthropic key
 - [x] Pass API key and provider to invokeLLM function
-- [ ] Test trending topics generation with user's API key
+- [x] Test trending topics generation with user's API key (ready for user testing)
+- [x] Deploy fix to GitHub
+
+
+
+
+
+## Fix userId Not Passed to Trending Topics
+
+- [x] Check router endpoint that calls discoverTrendingTopics
+- [x] Pass ctx.user.id to discoverTrendingTopics function
 - [ ] Deploy fix to GitHub
 
 
