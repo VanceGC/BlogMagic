@@ -136,7 +136,10 @@ export const appRouter = router({
         if (!blogConfig) {
           throw new Error("Blog configuration not found");
         }
-        return await getTrendingSuggestions(blogConfig);
+        console.log('[Router] Calling getTrendingSuggestions for blog:', blogConfig.siteName);
+        const result = await getTrendingSuggestions(blogConfig);
+        console.log('[Router] Got', result.length, 'suggestions');
+        return result;
       }),
 
     saveTopic: protectedProcedure

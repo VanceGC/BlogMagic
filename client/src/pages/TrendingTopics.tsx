@@ -45,6 +45,8 @@ export default function TrendingTopics() {
 
   const generateTrendingMutation = trpc.trending.getSuggestions.useMutation({
     onSuccess: (data) => {
+      console.log('[Frontend] Received trending topics:', data);
+      console.log('[Frontend] Number of topics:', data?.length);
       toast.success("Trending topics generated! 10 credits deducted.");
       setGeneratedTopics(data);
       utils.subscription.get.invalidate();

@@ -17,9 +17,12 @@ export async function discoverTrendingTopics(
   blogConfig: BlogConfig,
   userId?: number
 ): Promise<TrendingTopic[]> {
+  console.log('[TrendingTopics] Starting discoverTrendingTopics for:', blogConfig.siteName);
   const keywords = blogConfig.keywords || "";
   const businessDesc = blogConfig.businessDescription || "";
   const competitors = blogConfig.competitors || "";
+  console.log('[TrendingTopics] Keywords:', keywords);
+  console.log('[TrendingTopics] Business:', businessDesc);
 
   // Collect trending data from multiple sources
   const trendingData: any[] = [];
@@ -130,9 +133,11 @@ export async function discoverTrendingTopics(
 
   // If we didn't get any trending data, return empty array
   if (trendingData.length === 0) {
-    console.log("No trending data found, will use AI to generate topics");
+    console.log("[TrendingTopics] No trending data found, will use AI to generate topics");
     return [];
   }
+  
+  console.log('[TrendingTopics] Found', trendingData.length, 'trending items');
 
   // Use AI to analyze trending data and generate blog topics
   const trendingDataSummary = trendingData
@@ -238,7 +243,9 @@ For each topic, explain why it's trending and what makes it compelling.`;
   const content = response.choices[0].message.content;
   const contentString = typeof content === 'string' ? content : JSON.stringify(content);
   const result = JSON.parse(contentString || "{}");
-  return result.topics || [];
+  const topics = result.topics || [];
+  console.log('[TrendingTopics] Generated', topics.length, 'topics from AI');
+  return topics;
 }
 
 /**
