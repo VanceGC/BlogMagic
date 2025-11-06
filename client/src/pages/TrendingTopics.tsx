@@ -33,17 +33,28 @@ export default function TrendingTopics() {
 
   const utils = trpc.useUtils();
 
+  const saveTopicMutation = trpc.trending.saveTopic.useMutation({
+    onSuccess: () => {
+      // Don't show individual toast for auto-saves
+      refetchSaved();
+    },
+    onError: (error) => {
+      console.error(`Failed to save topic: ${error.message}`);
+    },
+  });
+
   const generateTrendingMutation = trpc.trending.getSuggestions.useMutation({
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       toast.success("Trending topics generated! 10 credits deducted.");
       setGeneratedTopics(data);
       utils.subscription.get.invalidate();
       
       // Auto-save all generated topics to database
       if (data && data.length > 0 && selectedBlogConfigId) {
-        for (const topic of data) {
-          try {
-            await saveTopicMutation.mutateAsync({
+        // Save each topic sequentially
+        data.forEach((topic, index) => {
+          setTimeout(() => {
+            saveTopicMutation.mutate({
               blogConfigId: selectedBlogConfigId,
               title: topic.title,
               reason: topic.reason,
@@ -51,27 +62,20 @@ export default function TrendingTopics() {
               keywords: topic.keywords,
               source: topic.source,
             });
-          } catch (error) {
-            console.error("Failed to auto-save topic:", error);
-          }
-        }
-        // Refresh saved topics list
-        refetchSaved();
-        toast.success(`${data.length} topics saved to your library!`);
+            
+            // Show success message after last topic
+            if (index === data.length - 1) {
+              setTimeout(() => {
+                refetchSaved();
+                toast.success(`${data.length} topics saved to your library!`);
+              }, 500);
+            }
+          }, index * 200); // Stagger saves by 200ms
+        });
       }
     },
     onError: (error) => {
       toast.error(`Failed to generate topics: ${error.message}`);
-    },
-  });
-
-  const saveTopicMutation = trpc.trending.saveTopic.useMutation({
-    onSuccess: () => {
-      toast.success("Topic saved!");
-      refetchSaved();
-    },
-    onError: (error) => {
-      toast.error(`Failed to save topic: ${error.message}`);
     },
   });
 
