@@ -410,6 +410,15 @@
 ## Update docker-compose.yml for Perplexity
 
 - [x] Add PERPLEXITY_API_KEY to docker-compose.yml environment section
-- [ ] Push updated docker-compose.yml to GitHub
+- [x] Push updated docker-compose.yml to GitHub
+
+
+
+
+
+## Fix Perplexity Model Name
+
+- [x] Update model from 'llama-3.1-sonar-small-128k-online' to 'sonar'
+- [ ] Deploy fix to GitHub
 
 
