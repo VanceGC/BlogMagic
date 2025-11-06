@@ -399,8 +399,17 @@
 - [x] Create Perplexity API helper function
 - [x] Update trendingTopics.ts to use Perplexity for web search
 - [x] Remove dependency on BUILT_IN_FORGE_API (Manus Data API)
-- [ ] Test trending topics generation with Perplexity
-- [ ] Update documentation with Perplexity setup instructions
-- [ ] Deploy to GitHub
+- [ ] Test trending topics generation with Perplexity (user needs to add API key)
+- [x] Update documentation with Perplexity setup instructions
+- [x] Deploy to GitHub
+
+
+
+
+
+## Update docker-compose.yml for Perplexity
+
+- [x] Add PERPLEXITY_API_KEY to docker-compose.yml environment section
+- [ ] Push updated docker-compose.yml to GitHub
 
 
