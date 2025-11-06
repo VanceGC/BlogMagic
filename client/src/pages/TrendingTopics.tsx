@@ -129,6 +129,14 @@ export default function TrendingTopics() {
       source: topic.source,
       keywords: topic.keywords,
       searchVolume: topic.searchVolume,
+    }, {
+      onSuccess: () => {
+        toast.success("Topic saved to your library!");
+        refetchSaved();
+      },
+      onError: (error) => {
+        toast.error(`Failed to save topic: ${error.message}`);
+      },
     });
   };
 
