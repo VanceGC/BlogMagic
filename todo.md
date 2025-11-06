@@ -419,6 +419,18 @@
 ## Fix Perplexity Model Name
 
 - [x] Update model from 'llama-3.1-sonar-small-128k-online' to 'sonar'
+- [x] Deploy fix to GitHub
+
+
+
+
+
+## Use User's OpenAI Key for Trending Topics
+
+- [x] Update trendingTopics.ts to use user's API key from apiKeys table
+- [x] Use getPreferredLLMKey to fetch user's OpenAI or Anthropic key
+- [x] Pass API key and provider to invokeLLM function
+- [ ] Test trending topics generation with user's API key
 - [ ] Deploy fix to GitHub
 
 

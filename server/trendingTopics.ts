@@ -1,6 +1,7 @@
 import { invokeLLM } from "./_core/llm";
 import { searchTrendingTopics } from "./_core/perplexity";
 import { BlogConfig } from "../drizzle/schema";
+import { getPreferredLLMKey } from "./apiKeyHelper";
 
 interface TrendingTopic {
   title: string;
@@ -54,6 +55,18 @@ export async function discoverTrendingTopics(
   
   console.log('[TrendingTopics] Got trending content from Perplexity');
 
+  // Get user's API key
+  if (!userId) {
+    throw new Error("User ID is required for trending topics generation");
+  }
+  
+  const llmKey = await getPreferredLLMKey(userId);
+  if (!llmKey) {
+    throw new Error("No LLM API key configured. Please add an OpenAI or Anthropic API key in Settings.");
+  }
+  
+  console.log(`[TrendingTopics] Using ${llmKey.provider} API key`);
+
   // Use AI to analyze trending data and generate blog topics
   const prompt = `Based on the following trending information, generate 10 compelling blog post topic ideas for a business in this niche:
 
@@ -90,6 +103,8 @@ Focus on topics that:
         content: prompt,
       },
     ],
+    apiKey: llmKey.apiKey,
+    provider: llmKey.provider,
     response_format: {
       type: "json_schema",
       json_schema: {
