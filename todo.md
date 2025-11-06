@@ -390,3 +390,17 @@
 - [ ] Test and deploy final fix
 
 
+
+
+
+## Integrate Perplexity API for Trending Topics
+
+- [x] Add PERPLEXITY_API_KEY to environment variables
+- [x] Create Perplexity API helper function
+- [x] Update trendingTopics.ts to use Perplexity for web search
+- [x] Remove dependency on BUILT_IN_FORGE_API (Manus Data API)
+- [ ] Test trending topics generation with Perplexity
+- [ ] Update documentation with Perplexity setup instructions
+- [ ] Deploy to GitHub
+
+

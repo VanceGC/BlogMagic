@@ -133,20 +133,8 @@ export async function selectNextTopic(
   userId: number,
   useTrending: boolean = true
 ): Promise<string> {
-  // Try to get a trending topic first (50% of the time)
-  if (useTrending && Math.random() > 0.5) {
-    try {
-      const { selectTrendingTopic } = await import("./trendingTopics");
-      const trendingTopic = await selectTrendingTopic(blogConfig, userId);
-      if (trendingTopic) {
-        console.log("Selected trending topic:", trendingTopic);
-        return trendingTopic;
-      }
-    } catch (error) {
-      console.error("Failed to get trending topic:", error);
-      // Fall back to diverse topics
-    }
-  }
+  // Trending topics are now managed separately through the Trending Topics page
+  // This function focuses on generating diverse topics based on blog config
 
   // Generate a batch of diverse topics
   const topics = await generateDiverseTopics(blogConfig, userId, 5);
