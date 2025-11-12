@@ -490,5 +490,17 @@
 - [x] Implemented processScheduledPosts() to publish due posts
 - [x] Added startScheduler() to run checks every 5 minutes
 - [x] Integrated scheduler startup in server/_core/index.ts
+- [x] Deploy fix to GitHub
+
+
+
+
+## Add Yoast SEO Metadata Support
+
+- [x] Research Yoast SEO REST API fields
+- [x] Check current wordpressPublisher.ts implementation - already had support!
+- [x] Fixed scheduler to pass SEO fields (seoTitle, seoDescription, keywords)
+- [x] Updated focus keyphrase to use first keyword only (Yoast expects single phrase)
+- [x] Added categories support to scheduler
 - [ ] Deploy fix to GitHub
 

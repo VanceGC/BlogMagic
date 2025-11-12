@@ -249,8 +249,12 @@ export async function publishScheduledPost(postId: number, userId: number): Prom
         title: post.title,
         content: post.content,
         excerpt: post.excerpt || undefined,
+        seoTitle: post.seoTitle || undefined,
+        seoDescription: post.seoDescription || undefined,
+        keywords: post.keywords || undefined,
         featuredImageUrl: post.featuredImageUrl || undefined,
         status: postStatus,
+        categories: post.categories ? JSON.parse(post.categories) : undefined,
       }
     );
 

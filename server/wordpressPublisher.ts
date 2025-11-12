@@ -154,10 +154,13 @@ export async function publishToWordPress(
 
     // Add Yoast SEO meta if SEO data is provided
     if (post.seoTitle || post.seoDescription || post.keywords) {
+      // Extract first keyword as focus keyphrase (Yoast expects a single keyphrase)
+      const focusKeyphrase = post.keywords ? post.keywords.split(',')[0].trim() : undefined;
+      
       postData.meta = {
         _yoast_wpseo_title: post.seoTitle,
         _yoast_wpseo_metadesc: post.seoDescription,
-        _yoast_wpseo_focuskw: post.keywords,
+        _yoast_wpseo_focuskw: focusKeyphrase,
       };
     }
 
