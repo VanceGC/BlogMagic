@@ -502,5 +502,17 @@
 - [x] Fixed scheduler to pass SEO fields (seoTitle, seoDescription, keywords)
 - [x] Updated focus keyphrase to use first keyword only (Yoast expects single phrase)
 - [x] Added categories support to scheduler
+- [x] Deploy fix to GitHub
+
+
+
+
+## Fix Featured Image Not Uploading in Auto-Publishing
+
+- [x] Check if featuredImageUrl is being stored in database - YES
+- [x] Check if scheduler is passing featuredImageUrl correctly - YES
+- [x] Found issue: WordPress publisher wasn't correctly resolving local file paths
+- [x] Fixed path resolution to remove leading slash before joining with process.cwd()
+- [x] Added better logging to debug file path conversion
 - [ ] Deploy fix to GitHub
 

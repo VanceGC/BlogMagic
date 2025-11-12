@@ -42,8 +42,10 @@ export async function uploadImageToWordPress(
       const path = await import('path');
       
       // Convert URL path to filesystem path
-      const filePath = path.join(process.cwd(), imageUrl);
-      console.log('[WordPress Publisher] File path:', filePath);
+      // Remove leading slash and join with process.cwd()
+      const relativePath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+      const filePath = path.join(process.cwd(), relativePath);
+      console.log('[WordPress Publisher] Converting URL to file path:', { imageUrl, relativePath, filePath });
       
       try {
         imageBuffer = await fs.readFile(filePath);
