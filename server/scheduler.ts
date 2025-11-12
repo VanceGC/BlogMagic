@@ -176,19 +176,38 @@ export async function generateScheduledPosts(
 export async function processScheduledPosts(): Promise<void> {
   const allDb = await db.getDb();
   if (!allDb) {
-    console.error("Database not available");
+    console.error("[Scheduler] Database not available");
     return;
   }
 
-  // Get all scheduled posts that are due
   const now = new Date();
+  console.log("[Scheduler] Checking for scheduled posts at", now.toISOString());
   
-  // This is a simplified version - in production you'd query the database more efficiently
-  // For now, we'll need to add a helper function to get all scheduled posts
-  console.log("Processing scheduled posts at", now.toISOString());
-  
-  // TODO: Implement actual scheduled post processing
-  // This would typically run on a cron job every 5-15 minutes
+  try {
+    // Get all scheduled posts that are due
+    const duePosts = await db.getScheduledPostsDue();
+    
+    if (duePosts.length === 0) {
+      console.log("[Scheduler] No posts due for publishing");
+      return;
+    }
+    
+    console.log(`[Scheduler] Found ${duePosts.length} posts due for publishing`);
+    
+    // Process each post
+    for (const post of duePosts) {
+      try {
+        console.log(`[Scheduler] Publishing post: ${post.title} (ID: ${post.id})`);
+        await publishScheduledPost(post.id, post.userId);
+        console.log(`[Scheduler] Successfully published post: ${post.title}`);
+      } catch (error) {
+        console.error(`[Scheduler] Failed to publish post ${post.id}:`, error);
+        // Continue with next post even if one fails
+      }
+    }
+  } catch (error) {
+    console.error("[Scheduler] Error processing scheduled posts:", error);
+  }
 }
 
 /**
@@ -249,5 +268,27 @@ export async function publishScheduledPost(postId: number, userId: number): Prom
     });
     throw error;
   }
+}
+
+
+
+/**
+ * Start the scheduler to check for due posts every 5 minutes
+ */
+export function startScheduler(): void {
+  console.log("[Scheduler] Starting scheduler - will check for due posts every 5 minutes");
+  
+  // Run immediately on startup
+  processScheduledPosts().catch(error => {
+    console.error("[Scheduler] Error in initial run:", error);
+  });
+  
+  // Then run every 5 minutes
+  const interval = 5 * 60 * 1000; // 5 minutes in milliseconds
+  setInterval(() => {
+    processScheduledPosts().catch(error => {
+      console.error("[Scheduler] Error in scheduled run:", error);
+    });
+  }, interval);
 }
 

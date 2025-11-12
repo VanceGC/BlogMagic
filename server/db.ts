@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, subscriptions, InsertSubscription, apiKeys, InsertApiKey, blogConfigs, InsertBlogConfig, posts, InsertPost, postQueue, InsertPostQueueItem, savedTopics, InsertSavedTopic, images, InsertImage, sitePages, InsertSitePage, externalSources, InsertExternalSource } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -255,6 +255,19 @@ export async function getPostById(id: number, userId: number) {
   if (!db) return undefined;
   const result = await db.select().from(posts).where(and(eq(posts.id, id), eq(posts.userId, userId))).limit(1);
   return result[0];
+}
+
+export async function getScheduledPostsDue() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const now = new Date();
+  const result = await db
+    .select()
+    .from(posts)
+    .where(and(eq(posts.status, "scheduled"), lte(posts.scheduledFor, now)));
+  
+  return result;
 }
 
 export async function getPostsByUserId(userId: number, limit = 50) {

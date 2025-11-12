@@ -477,5 +477,18 @@
 - [x] Remove auto-save logic from generateTrendingMutation onSuccess
 - [x] Keep only manual save via "Save Topic" button
 - [x] Updated success message to guide users to click Save Topic
+- [x] Deploy fix to GitHub
+
+
+
+
+## Fix Scheduled Post Auto-Publishing
+
+- [x] Check if scheduler.ts exists and how it's implemented
+- [x] Found processScheduledPosts() was never being called
+- [x] Added getScheduledPostsDue() function to db.ts
+- [x] Implemented processScheduledPosts() to publish due posts
+- [x] Added startScheduler() to run checks every 5 minutes
+- [x] Integrated scheduler startup in server/_core/index.ts
 - [ ] Deploy fix to GitHub
 
