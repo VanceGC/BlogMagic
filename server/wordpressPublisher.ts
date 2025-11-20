@@ -34,8 +34,29 @@ export async function uploadImageToWordPress(
     let imageBuffer: Buffer;
     let contentType: string;
     
+    // If it's a legacy API endpoint (/api/images/ID), read from database
+    if (imageUrl.startsWith('/api/images/')) {
+      console.log('[WordPress Publisher] Reading image from database (legacy format)...');
+      
+      const imageId = parseInt(imageUrl.split('/').pop() || '0');
+      if (!imageId) {
+        throw new Error(`Invalid image ID in URL: ${imageUrl}`);
+      }
+      
+      const { getImageById } = await import('./db');
+      const image = await getImageById(imageId);
+      
+      if (!image) {
+        throw new Error(`Image not found in database: ID ${imageId}`);
+      }
+      
+      // Convert base64 back to buffer
+      imageBuffer = Buffer.from(image.data, 'base64');
+      contentType = image.mimeType;
+      console.log(`[WordPress Publisher] Image loaded from database: ${imageBuffer.length} bytes, type: ${contentType}`);
+    }
     // If it's a local file path (starts with /uploads), read from filesystem
-    if (imageUrl.startsWith('/uploads/')) {
+    else if (imageUrl.startsWith('/uploads/')) {
       console.log('[WordPress Publisher] Reading image from local filesystem...');
       
       const fs = await import('fs/promises');
