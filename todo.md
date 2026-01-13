@@ -444,3 +444,13 @@
 - [ ] Deploy fix to GitHub
 
 
+
+
+## Fix WordPress Cache Not Clearing After Auto-Publishing
+
+- [x] Identified issue: SiteGround Speed Optimizer with Dynamic Caching
+- [x] Added purgeSiteGroundCache function to WordPress publisher
+- [x] Integrated cache purge after successful post publication
+- [x] Made cache purge non-blocking (won't fail publish if cache purge fails)
+- [ ] User needs to enable "purge WordPress API cache" in Speed Optimizer settings
+- [ ] Deploy fix

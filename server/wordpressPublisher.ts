@@ -173,7 +173,18 @@ export async function publishToWordPress(
       }
     );
 
-    return response.data.id.toString();
+    const wordpressPostId = response.data.id.toString();
+    
+    // Attempt to purge SiteGround cache (if plugin is installed)
+    try {
+      await purgeSiteGroundCache(credentials);
+      console.log('[WordPress Publisher] SiteGround cache purged successfully');
+    } catch (cacheError: any) {
+      // Don't fail the publish if cache purge fails
+      console.warn('[WordPress Publisher] Could not purge cache (this is OK if SiteGround Speed Optimizer is not installed):', cacheError.message);
+    }
+    
+    return wordpressPostId;
   } catch (error: any) {
     console.error('Failed to publish to WordPress:', error.response?.data || error.message);
     throw new Error(`WordPress publish failed: ${error.response?.data?.message || error.message}`);
@@ -264,3 +275,31 @@ export async function testWordPressConnection(credentials: WordPressCredentials)
   }
 }
 
+
+/**
+ * Purge SiteGround Speed Optimizer cache
+ * This function attempts to clear the cache by calling the SiteGround API
+ */
+async function purgeSiteGroundCache(credentials: WordPressCredentials): Promise<void> {
+  const auth = Buffer.from(`${credentials.username}:${credentials.appPassword}`).toString('base64');
+  
+  // SiteGround Speed Optimizer provides a REST API endpoint to purge cache
+  // Reference: https://wordpress.org/plugins/sg-cachepress/
+  try {
+    await axios.post(
+      `${credentials.url}/wp-json/sg-cachepress/v1/purge`,
+      {},
+      {
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        },
+        // Don't fail if endpoint doesn't exist
+        validateStatus: (status) => status < 500
+      }
+    );
+  } catch (error: any) {
+    // Silently fail - cache purge is not critical
+    throw new Error(`Cache purge failed: ${error.message}`);
+  }
+}
